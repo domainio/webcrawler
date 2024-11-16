@@ -135,7 +135,7 @@ class WebCrawler:
             self.logger.error(f"Error crawling {url}: {str(e)}")
             return set()
 
-    def crawl(self):
+    def crawl(self) -> dict:
         """Main crawling method with progress bar."""
         queue = [(self.root_url, 1)]
         with tqdm(range(10),desc="Crawling pages") as pbar:
@@ -151,7 +151,5 @@ class WebCrawler:
                         for link in links:
                             if link not in self.visited_urls:
                                 queue.append((link, depth + 1))
-
-    def save_results(self) -> str:
-        """Save crawl results to a file."""
-        return io_file_writer.write_results(self.root_url, self.results, self.logger)
+        
+        return dict(self.results)  # Return a copy of results

@@ -3,6 +3,7 @@ import sys
 import logging
 from src.app.web_crawler import WebCrawler
 from src.utils.logger import setup_logger
+from src.utils import io_file_writer
 
 def main():
     # Set up logging
@@ -23,8 +24,10 @@ def main():
     # Initialize and run crawler
     try:
         crawler = WebCrawler(url, max_depth, logger)
-        crawler.crawl()
-        output_file = crawler.save_results()
+        results = crawler.crawl()
+        
+        # Save results to file
+        output_file = io_file_writer.write_results(url, results, logger)
         logger.info(f"Crawl completed. Results saved to: {output_file}")
     except Exception as e:
         logger.error(f"Crawl failed: {str(e)}")
