@@ -1,23 +1,21 @@
 import logging
-from typing import Optional
+from ..utils.config import Config
 
-def setup_logger(name: Optional[str] = None) -> logging.Logger:
-    """
-    Configure and return a logger instance.
+def setup_logger(name: str) -> logging.Logger:
+    """Configure a logger with console handler and formatter.
     
     Args:
-        name (str, optional): Name for the logger. If None, returns the root logger.
+        name: Name for the logger instance
     
     Returns:
-        logging.Logger: Configured logger instance
+        logging.Logger: Configured logger with console handler
     """
-    logger = logging.getLogger(name)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
     
-    # Only configure if handlers haven't been set up
-    if not logger.handlers:
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
+    logger = logging.getLogger(name)
+    logger.addHandler(console_handler)
+    logger.setLevel(Config.get_log_level())
     
     return logger

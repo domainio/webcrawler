@@ -1,4 +1,5 @@
 import os
+import logging
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -29,3 +30,11 @@ class Config:
     def get_timeout() -> int:
         """Get the request timeout in seconds."""
         return int(os.getenv('REQUEST_TIMEOUT', '10'))
+
+    @staticmethod
+    def get_log_level() -> int:
+        """Get the logging level from environment or default to INFO."""
+        try:
+            return getattr(logging, os.getenv('LOG_LEVEL', 'INFO').upper())
+        except AttributeError:
+            return logging.INFO
