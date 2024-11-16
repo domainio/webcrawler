@@ -147,18 +147,14 @@ class WebCrawler:
 
     def crawl(self) -> dict:
         """Main crawling method with progress bar."""
-        queue = [(self.root_url, 0)]  # Start counting current depth from 0
+        queue = [(self.root_url, 1)]  # Start counting current depth from 1
         with tqdm(desc=f"Crawling (max depth: {self.max_depth})") as pbar:
-            while queue:
+            while queue and queue[0][1] <= self.max_depth:
                 url, current_depth = queue.pop(0)
-                
-                if current_depth >= self.max_depth:  # Stop when we reach user-specified depth
-                    continue
-                    
                 links = self.crawl_page(url, current_depth)
                 pbar.update(1)
                 pbar.set_description(
-                    f"Depth: {current_depth}/{self.max_depth-1} "  # Show 0-based depth to user
+                    f"Depth: {current_depth}/{self.max_depth} "
                     f"(visited: {len(self.visited_urls)}, queue: {len(queue)})"
                 )
                 
