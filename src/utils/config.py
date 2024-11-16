@@ -15,10 +15,9 @@ class Config:
         results_dir = os.getenv('CRAWL_RESULTS_DIR', './.crawls')
         # Convert relative path to absolute path
         if results_dir.startswith('./'):
-            results_dir = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                results_dir.lstrip('./')
-            )
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            relative_path = results_dir[2:]  # Remove './' but keep any other dots
+            return os.path.join(base_dir, relative_path)
         return results_dir
 
     @staticmethod
