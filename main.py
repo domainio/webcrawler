@@ -25,10 +25,10 @@ def main():
     try:
         crawler = WebCrawler(url, max_depth, logger)
         results = crawler.crawl()
+        logger.info(results)
         
         # Save results to file
-        output_file = io_file_writer.write_results(url, results, logger)
-        logger.info(f"Crawl completed. Results saved to: {output_file}")
+        io_file_writer.write_results(url, results, logger)
     except Exception as e:
         logger.error(f"Crawl failed: {str(e)}")
         sys.exit(1)

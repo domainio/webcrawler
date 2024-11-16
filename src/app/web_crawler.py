@@ -39,20 +39,21 @@ class WebCrawler:
         
         # If no scheme, try HTTPS first
         if not parsed.scheme:
-            self.logger.info(f"No scheme in URL: {url}, trying HTTPS first")
+            self.logger.debug(f"No scheme in URL: {url}, trying HTTPS first")
             try:
                 https_url = f"https://{url}"
                 response = requests.head(https_url, timeout=5)
                 if response.status_code < 400:
-                    self.logger.info(f"HTTPS works for {url}")
+                    self.logger.debug(f"HTTPS works for {https_url}")
                     return urlparse(https_url)._replace(fragment='').geturl()
             except requests.RequestException:
-                self.logger.warn(f"HTTPS failed for {url}, falling back to HTTP")
-                return urlparse(f"http://{url}")._replace(fragment='').geturl()
+                http_url = urlparse(f"http://{url}")._replace(fragment='').geturl()
+                self.logger.debug(f"HTTPS failed, falling back to HTTP {http_url}")
+                return http_url
         
         # Remove fragments
         normalied_url = parsed._replace(fragment='').geturl()
-        self.logger.info(f"Normalized URL: {normalied_url}")
+        self.logger.debug(f"Normalized URL: {normalied_url}")
         return normalied_url
     
     def get_domain(self, url):
@@ -138,18 +139,22 @@ class WebCrawler:
     def crawl(self) -> dict:
         """Main crawling method with progress bar."""
         queue = [(self.root_url, 1)]
-        with tqdm(range(10),desc="Crawling pages") as pbar:
+        with tqdm(desc=f"Crawling (max depth: {self.max_depth})") as pbar:
             while queue:
                 url, depth = queue.pop(0)
                 
                 if url not in self.visited_urls:
                     links = self.crawl_page(url, depth)
                     pbar.update(1)
+                    pbar.set_description(
+                        f"Depth: {depth}/{self.max_depth} "
+                        f"(visited: {len(self.visited_urls)}, queue: {len(queue)})"
+                    )
                     
                     # Add new links to queue
                     if depth < self.max_depth:
                         for link in links:
                             if link not in self.visited_urls:
                                 queue.append((link, depth + 1))
-        
-        return dict(self.results)  # Return a copy of results
+        self.logger.info("Crawl completed.")
+        return dict(self.results)
