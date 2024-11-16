@@ -33,29 +33,36 @@ class WebCrawler:
         })
         self.timeout = Config.get_timeout()
         
+    def verify_url(self, url: str) -> tuple[str, bool]:
+        """Verify URL works and return status."""
+        try:
+            response = requests.head(url, timeout=5)
+            return url, response.status_code < 400
+        except requests.RequestException:
+            return url, False
+
     def normalize_url(self, url: str) -> str:
-        """Normalize URL: try HTTPS first, fallback to HTTP, remove fragments."""
+        """Normalize URL: verify existing scheme, or try HTTPS first, otherwise fallback to HTTP."""
         parsed = urlparse(url)
         
-        # If no scheme, try HTTPS first
-        if not parsed.scheme:
-            self.logger.debug(f"No scheme in URL: {url}, trying HTTPS first")
-            try:
-                https_url = f"https://{url}"
-                response = requests.head(https_url, timeout=5)
-                if response.status_code < 400:
-                    self.logger.debug(f"HTTPS works for {https_url}")
-                    return urlparse(https_url)._replace(fragment='').geturl()
-            except requests.RequestException:
-                http_url = urlparse(f"http://{url}")._replace(fragment='').geturl()
-                self.logger.debug(f"HTTPS failed, falling back to HTTP {http_url}")
-                return http_url
-        
-        # Remove fragments
-        normalied_url = parsed._replace(fragment='').geturl()
-        self.logger.debug(f"Normalized URL: {normalied_url}")
-        return normalied_url
-    
+        # Handle URLs with scheme
+        if parsed.scheme:
+            if parsed.scheme not in ('http', 'https'):
+                raise ValueError(f"Unsupported scheme: {parsed.scheme}")
+            url, ok = self.verify_url(parsed._replace(fragment='').geturl())
+            if not ok:
+                raise ValueError(f"Failed to verify URL: {url}")
+            return url
+            
+        # Try HTTPS then HTTP
+        https_url, ok = self.verify_url(f"https://{url}")
+        if ok:
+            return https_url
+        http_url, ok = self.verify_url(f"http://{url}")
+        if ok:
+            return http_url
+        raise ValueError(f"Failed to verify URL: {url}")
+
     def get_domain(self, url):
         """Extract domain from URL."""
         return urlparse(url).netloc
@@ -72,6 +79,10 @@ class WebCrawler:
         href = tag.get('href', '')
         return href.startswith('javascript:') or href.startswith('#!')
 
+    def handle_relative_url(self, base_url, url):
+        """Handle relative URLs."""
+        return urljoin(base_url, url)
+    
     def extract_links(self, html_content, base_url):
         """Extract and normalize all links from HTML content."""
         soup = BeautifulSoup(html_content, 'html.parser')
@@ -87,10 +98,8 @@ class WebCrawler:
             if not href or href.startswith(('#', 'mailto:', 'tel:', 'javascript:')):
                 continue
 
-            # Handle relative URLs
-            full_url = urljoin(base_url, href)
+            full_url = self.handle_relative_url(base_url,href)
             
-            # Normalize URL
             try:
                 full_url = self.normalize_url(full_url)
             except ValueError:
@@ -107,7 +116,7 @@ class WebCrawler:
 
     def crawl_page(self, url, depth):
         """Crawl a single page and return its links and ratio."""
-        if depth > self.max_depth or url in self.visited_urls:
+        if url in self.visited_urls:
             return set()
 
         self.visited_urls.add(url)
@@ -138,23 +147,25 @@ class WebCrawler:
 
     def crawl(self) -> dict:
         """Main crawling method with progress bar."""
-        queue = [(self.root_url, 1)]
+        queue = [(self.root_url, 0)]  # Start counting current depth from 0
         with tqdm(desc=f"Crawling (max depth: {self.max_depth})") as pbar:
             while queue:
-                url, depth = queue.pop(0)
+                url, current_depth = queue.pop(0)
                 
-                if url not in self.visited_urls:
-                    links = self.crawl_page(url, depth)
-                    pbar.update(1)
-                    pbar.set_description(
-                        f"Depth: {depth}/{self.max_depth} "
-                        f"(visited: {len(self.visited_urls)}, queue: {len(queue)})"
-                    )
+                if current_depth >= self.max_depth:  # Stop when we reach user-specified depth
+                    continue
                     
-                    # Add new links to queue
-                    if depth < self.max_depth:
-                        for link in links:
-                            if link not in self.visited_urls:
-                                queue.append((link, depth + 1))
+                links = self.crawl_page(url, current_depth)
+                pbar.update(1)
+                pbar.set_description(
+                    f"Depth: {current_depth}/{self.max_depth-1} "  # Show 0-based depth to user
+                    f"(visited: {len(self.visited_urls)}, queue: {len(queue)})"
+                )
+                
+                # Add new links to queue
+                for link in links:
+                    if link not in self.visited_urls:
+                        queue.append((link, current_depth + 1))
+        
         self.logger.info("Crawl completed.")
         return dict(self.results)
