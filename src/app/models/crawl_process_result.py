@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 from typing import Dict, Set
 from datetime import datetime
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 from .crawl_page_result import CrawlPageResult
 
 class CrawlProcessResult(BaseModel):
-    """Data model for storing results of an entire crawl process."""
-    start_url: HttpUrl = Field(description="The initial URL where crawling started")
+    """Result of a complete crawl process."""
+    
+    start_url: str = Field(description="Starting URL for the crawl")
+    start_time: str = Field(
+        default_factory=lambda: datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        description="Timestamp when the crawl started"
+    )
+    end_time: str = Field(
+        default="",
+        description="Timestamp when the crawl completed"
+    )
     crawled_pages: Dict[str, CrawlPageResult] = Field(
         default_factory=dict,
         description="Dictionary mapping URLs to their crawl results"
@@ -15,14 +24,6 @@ class CrawlProcessResult(BaseModel):
     all_discovered_urls: Set[str] = Field(
         default_factory=set,
         description="Set of all unique URLs discovered during the entire crawl"
-    )
-    start_time: str = Field(
-        default_factory=lambda: datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        description="Timestamp when the crawl started"
-    )
-    end_time: str = Field(
-        default_factory=lambda: datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        description="Timestamp when the crawl completed"
     )
 
     class Config:
