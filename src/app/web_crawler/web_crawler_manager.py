@@ -27,15 +27,14 @@ class WebCrawlerManager:
         self.n_jobs = n_jobs
         self.visited_urls = set()
         self.visited_lock = Lock()
+        self.root_url = root_url
+        self.crawl_process = CrawlProcessResult(start_url=root_url)
         
-        # Init web page session configuration
+        # Init web session configuration
         self.headers = {'User-Agent': Config.get_user_agent()}
         self.timeout = Config.get_timeout()
         
-        # Initialize crawl session
-        self.root_url = root_url
-        self.crawl_session = CrawlProcessResult(start_url=root_url)
-
+        
     def create_worker(self) -> WebCrawlerWorker:
         """Create a new worker instance."""
         return WebCrawlerWorker(self.headers, self.timeout)
@@ -83,8 +82,8 @@ class WebCrawlerManager:
                     continue
                 
                 new_urls, page_results = self.process_batch(current_batch)
-                self.crawl_session.crawled_pages.update(page_results)
-                self.crawl_session.all_discovered_urls.update(new_urls)
+                self.crawl_process.crawled_pages.update(page_results)
+                self.crawl_process.all_discovered_urls.update(new_urls)
                 
                 # Add new URLs to queue and update progress
                 current_depth = current_batch[0][1]
@@ -97,8 +96,9 @@ class WebCrawlerManager:
                 pbar.set_description(
                     f"Depth: {current_depth}/{self.max_depth} "
                     f"Queue: {len(queue)} "
-                    f"Crawled: {len(self.crawl_session.crawled_pages)}"
+                    f"Crawled: {len(self.crawl_process.crawled_pages)}"
                 )
         
-        self.crawl_session.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        return self.crawl_session
+        self.crawl_process.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        return self.crawl_process
+
