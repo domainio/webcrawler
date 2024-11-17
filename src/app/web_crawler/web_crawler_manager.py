@@ -28,15 +28,15 @@ class WebCrawlerManager:
         self.n_jobs = n_jobs
         self.visited_urls = set()
         self.visited_lock = Lock()
-        self.crawl_session = CrawlProcessResult(start_url=root_url)
         
         # Create session configuration
         self.headers = {'User-Agent': Config.get_user_agent()}
         self.timeout = Config.get_timeout()
         
-        # Initialize root URL
+        # Initialize root URL with proper scheme
         worker = self.create_worker()
         self.root_url = worker.normalize_url(root_url)
+        self.crawl_session = CrawlProcessResult(start_url=self.root_url)
 
     def create_worker(self) -> WebCrawlerWorker:
         """Create a new worker instance."""
