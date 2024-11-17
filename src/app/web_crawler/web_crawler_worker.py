@@ -3,10 +3,10 @@ from datetime import datetime
 from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
-import validators
 from typing import Set, Tuple, Dict
 
 from ..models import CrawlPageResult
+from ...utils import validate_url, normalize_url
 
 class WebCrawlerWorker:
     """Worker class for crawling individual URLs."""
@@ -23,28 +23,6 @@ class WebCrawlerWorker:
         self.session = requests.Session()
         self.session.headers.update(headers)
 
-    def validate_url(self, url: str) -> bool:
-        """Validate URL format using validators."""
-        return validators.url(url) if url else False
-
-    def normalize_url(self, url: str) -> str:
-        """Normalize URL with scheme."""
-        parsed = urlparse(url)
-        if parsed.scheme:
-            return url
-            
-        # Try HTTPS first, then HTTP
-        for scheme in ['https://', 'http://']:
-            try:
-                full_url = f"{scheme}{url}"
-                response = requests.head(full_url, timeout=self.timeout, headers=self.headers)
-                if response.status_code < 400:
-                    return full_url
-            except requests.RequestException:
-                continue
-                
-        raise ValueError(f"Failed to verify URL: {url}")
-
     def extract_links(self, html_content: str, base_url: str) -> Tuple[Set[str], float]:
         """Extract and analyze links from HTML content."""
         soup = BeautifulSoup(html_content, 'html.parser')
@@ -60,10 +38,10 @@ class WebCrawlerWorker:
 
             try:
                 full_url = urljoin(base_url, href)
-                if not self.validate_url(full_url):
+                if not validate_url(full_url):
                     continue
                     
-                normalized_url = self.normalize_url(full_url)
+                normalized_url = normalize_url(full_url, self.timeout, self.headers)
                 links.add(normalized_url)
                 total_links += 1
                 
@@ -78,7 +56,7 @@ class WebCrawlerWorker:
     def crawl_url(self, url: str, depth: int) -> CrawlPageResult:
         """Crawl a single URL and return results"""
         try:
-            normalized_url = self.normalize_url(url)
+            normalized_url = normalize_url(url, self.timeout, self.headers)
             
             response = self.session.get(normalized_url, timeout=self.timeout, allow_redirects=True)
             response.raise_for_status()
