@@ -5,6 +5,7 @@ from typing import List, Set, Dict, Tuple
 from datetime import datetime
 from joblib import Parallel, delayed
 from tqdm import tqdm
+from multiprocessing import cpu_count
 
 from ...utils.config import Config
 from .web_crawler_worker import WebCrawlerWorker
@@ -70,10 +71,15 @@ class WebCrawlerManager:
             
         return all_discovered_urls, crawled_pages
 
+    def calc_batch_size(self) -> int:
+        """Calculate the optimal batch size based on available cpu cores."""
+        n_workers = cpu_count() if self.n_jobs == -1 else self.n_jobs
+        return max(100, n_workers * 2)
+    
     def crawl(self) -> CrawlProcessResult:
         """Execute the crawling process."""
         queue = [(self.root_url, 1)]
-        batch_size = max(100, self.n_jobs * 2)
+        batch_size = self.calc_batch_size()
         
         with tqdm(desc=f"Crawling (max depth: {self.max_depth})") as pbar:
             while queue and queue[0][1] <= self.max_depth:
