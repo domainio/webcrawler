@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import logging
-from src.app.web_crawler import WebCrawler
+from src.app.web_crawler import WebCrawlerManager
 from src.utils.logger import setup_logger
 from src.utils import io_file_writer
 
@@ -21,14 +21,11 @@ def main():
         logger.error("Max depth must be an integer")
         sys.exit(1)
     
-    # Initialize and run crawler
     try:
-        crawler = WebCrawler(url, max_depth, logger)
+        crawler = WebCrawlerManager(url, max_depth, logger)
         results = crawler.crawl()
-        logger.info(results)
-        
-        # Save results to file
-        io_file_writer.write_results(url, results, logger)
+        output_path = io_file_writer.write_results(results)
+        logger.info(f"Results written to {output_path}")
     except Exception as e:
         logger.error(f"Crawl failed: {str(e)}")
         sys.exit(1)

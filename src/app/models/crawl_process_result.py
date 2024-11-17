@@ -3,7 +3,7 @@ from typing import Dict, Set
 from datetime import datetime
 from pydantic import BaseModel, Field, HttpUrl
 
-from .page_crawl_result import CrawlPageResult
+from .crawl_page_result import CrawlPageResult
 
 class CrawlProcessResult(BaseModel):
     """Data model for storing results of an entire crawl process."""
