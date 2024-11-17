@@ -23,12 +23,12 @@ class Config:
     @staticmethod
     def get_user_agent() -> str:
         """Get the User-Agent string for HTTP requests."""
-        return os.getenv('USER_AGENT', 'Mozilla/5.0 (compatible; PythonCrawler/1.0; +http://example.com)')
+        return os.getenv('WEB_PAGE_USER_AGENT', 'Mozilla/5.0 (compatible; PythonCrawler/1.0; +http://example.com)')
 
     @staticmethod
     def get_timeout() -> int:
         """Get the request timeout in seconds."""
-        return int(os.getenv('REQUEST_TIMEOUT', '10'))
+        return int(os.getenv('HTTP_REQUEST_TIMEOUT', '10'))
 
     @staticmethod
     def get_log_level() -> int:
