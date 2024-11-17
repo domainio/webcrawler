@@ -36,7 +36,7 @@ class WebCrawlerManager:
 
     def create_worker(self) -> WebCrawlerWorker:
         """Create a new worker instance."""
-        return WebCrawlerWorker(self.headers, self.timeout)
+        return WebCrawlerWorker(self.headers, self.timeout, self.logger)
 
     def prepare_batch(self, queue: List[Tuple[str, int]], batch_size: int) -> List[Tuple[str, int]]:
         """Prepare a batch of URLs at the same depth for processing."""
@@ -56,7 +56,7 @@ class WebCrawlerManager:
         """Process a batch of URLs in parallel."""
         worker = self.create_worker()
         
-        results = Parallel(n_jobs=self.n_jobs)(
+        results = Parallel(n_jobs=self.n_jobs, prefer='threads')(
             delayed(worker.crawl_url)(url, depth) for url, depth in urls_batch
         )
         
@@ -97,4 +97,3 @@ class WebCrawlerManager:
                         
         self.crawl_process_result.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         return self.crawl_process_result
-
