@@ -1,10 +1,10 @@
 from typing import Set
 from datetime import datetime
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 class CrawlPageResult(BaseModel):
     """Result of crawling a single page."""
-    url: HttpUrl = Field(description="The URL that was crawled")
+    url: str = Field(description="The URL that was crawled")
     discovered_links: Set[str] = Field(
         default_factory=set,
         description="Set of URLs discovered on this page"
