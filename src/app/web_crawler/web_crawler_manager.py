@@ -11,11 +11,11 @@ from ...utils.config import Config
 from .web_crawler_worker import WebCrawlerWorker
 from ..models import CrawlProcessResult, CrawlPageResult
 
-class WebCrawlerFactory:
-    """Factory class for managing web crawling operations."""
+class WebCrawlerManager:
+    """Manager class for coordinating web crawling operations."""
     
     def __init__(self, root_url: str, max_depth: int, logger: logging.Logger, n_jobs: int = -1):
-        """Initialize the crawler factory.
+        """Initialize the crawler manager.
         
         Args:
             root_url: Starting URL for crawling

@@ -1,12 +1,9 @@
-"""Web crawler components.
+"""Web crawler module."""
 
-Contains the main crawler factory and worker implementations.
-"""
-
-from .web_crawler_factory import WebCrawlerFactory
 from .web_crawler_worker import WebCrawlerWorker
+from .web_crawler_manager import WebCrawlerManager
 
 __all__ = [
-    'WebCrawlerFactory',
+    'WebCrawlerManager',
     'WebCrawlerWorker',
 ]

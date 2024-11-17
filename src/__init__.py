@@ -1,18 +1,12 @@
-"""Web crawler package.
+"""Web crawler package."""
 
-A robust, parallel-processing web crawler with advanced link analysis capabilities.
-"""
+__version__ = '0.1.0'
 
-from .app import WebCrawlerFactory, WebCrawlerWorker
-from .app.models import CrawlResult, PageData
-from .utils import setup_logger, Config, write_results
+from .app import WebCrawlerManager, WebCrawlerWorker
+from .utils import Config
 
 __all__ = [
-    'WebCrawlerFactory',
-    'WebCrawlerWorker',
-    'CrawlResult',
-    'PageData',
-    'setup_logger',
     'Config',
-    'write_results',
+    'WebCrawlerManager',
+    'WebCrawlerWorker',
 ]
