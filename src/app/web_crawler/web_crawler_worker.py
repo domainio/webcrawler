@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 import validators
 from typing import Set, Tuple
 
-from ..models.crawl_models import PageData, CrawlResult
+from ..models import CrawlPageResult
 
 class WebCrawlerWorker:
     """Worker class for crawling individual URLs."""
@@ -71,7 +71,7 @@ class WebCrawlerWorker:
         ratio = same_domain_count / total_links if total_links > 0 else 0
         return links, ratio
 
-    def crawl_url(self, url: str, depth: int) -> CrawlResult:
+    def crawl_url(self, url: str, depth: int) -> CrawlPageResult:
         """Crawl a single URL and return results.
         
         Args:
@@ -79,7 +79,7 @@ class WebCrawlerWorker:
             depth: Current crawl depth
             
         Returns:
-            CrawlResult containing found links and page data
+            CrawlPageResult containing discovered links and page analysis
         """
         try:
             response = self.session.get(url, timeout=self.timeout, allow_redirects=True)
@@ -87,21 +87,30 @@ class WebCrawlerWorker:
             
             content_type = response.headers.get('content-type', '').lower()
             if 'text/html' not in content_type:
-                return CrawlResult()
+                return CrawlPageResult(
+                    url=url,
+                    depth=depth,
+                    ratio=0.0,
+                    success=False,
+                    error="Not an HTML page"
+                )
 
             links, ratio = self.extract_links(response.text, url)
             
-            page_data = PageData(
+            return CrawlPageResult(
+                url=url,
+                discovered_links=links,
                 depth=depth,
                 ratio=ratio,
-                timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            )
-
-            return CrawlResult(
-                links=links,
-                data={url: page_data}
+                success=True
             )
 
         except requests.RequestException as e:
             logging.error(f"Error crawling {url}: {str(e)}")
-            return CrawlResult()
+            return CrawlPageResult(
+                url=url,
+                depth=depth,
+                ratio=0.0,
+                success=False,
+                error=str(e)
+            )
