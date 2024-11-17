@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import sys
 import logging
 from src.app.web_crawler import WebCrawlerManager

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from typing import Set
 from datetime import datetime
 from pydantic import BaseModel, Field, HttpUrl

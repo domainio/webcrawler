@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import logging
 from datetime import datetime
 from urllib.parse import urljoin, urlparse

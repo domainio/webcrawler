@@ -1,5 +1,3 @@
-"""Web crawler package."""
-
 from .app.web_crawler import WebCrawlerManager
 from .utils.logger import setup_logger
 from .utils.file_io import write, generate_filename
