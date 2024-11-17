@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from typing import Set, Tuple, Dict
 
 from ..models import CrawlPageResult
-from ...utils import validate_url, normalize_url, make_full_url, get_domain, is_same_domain
+from ...utils import validate_url, normalize_url, make_full_url, is_same_domain
 
 class WebCrawlerWorker:
     """Worker class for crawling individual URLs."""
@@ -22,6 +22,10 @@ class WebCrawlerWorker:
         self.session = requests.Session()
         self.session.headers.update(headers)
 
+    def calc_page_rank(self, same_domain_count: int, total_links: int) -> float:
+        """Calculate the rank of a page based on its same domain linkes vs total links"""
+        return same_domain_count / total_links if total_links > 0 else 0
+    
     def extract_links(self, html_content: str, base_url: str) -> Tuple[Set[str], float]:
         """Extract and analyze links from HTML content."""
         soup = BeautifulSoup(html_content, 'html.parser')
@@ -49,7 +53,7 @@ class WebCrawlerWorker:
             except Exception:
                 continue
 
-        ratio = same_domain_count / total_links if total_links > 0 else 0
+        ratio = self.calc_page_rank(same_domain_count, total_links)
         return links, ratio
 
     def crawl_url(self, url: str, depth: int) -> CrawlPageResult:
