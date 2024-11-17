@@ -42,11 +42,12 @@ class WebCrawlerWorker:
                     continue
                     
                 normalized_url = normalize_url(full_url, self.timeout, self.headers)
-                links.add(normalized_url)
-                total_links += 1
-                
-                if urlparse(normalized_url).netloc == base_domain:
-                    same_domain_count += 1
+                if normalized_url not in links:
+                    links.add(normalized_url)
+                    total_links += 1
+                    
+                    if urlparse(normalized_url).netloc == base_domain:
+                        same_domain_count += 1
             except Exception:
                 continue
 
