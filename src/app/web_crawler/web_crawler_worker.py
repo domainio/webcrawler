@@ -72,15 +72,7 @@ class WebCrawlerWorker:
         return links, ratio
 
     def crawl_url(self, url: str, depth: int) -> CrawlPageResult:
-        """Crawl a single URL and return results.
-        
-        Args:
-            url: URL to crawl
-            depth: Current crawl depth
-            
-        Returns:
-            CrawlPageResult containing discovered links and page analysis
-        """
+        """Crawl a single URL and return results"""
         try:
             response = self.session.get(url, timeout=self.timeout, allow_redirects=True)
             response.raise_for_status()

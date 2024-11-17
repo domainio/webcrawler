@@ -74,11 +74,7 @@ class WebCrawlerManager:
         return all_discovered_urls, crawled_pages
 
     def crawl(self) -> CrawlProcessResult:
-        """Execute the crawling process.
-        
-        Returns:
-            CrawlProcessResult containing all crawl data and metadata.
-        """
+        """Execute the crawling process."""
         queue = [(self.root_url, 1)]
         batch_size = max(100, self.n_jobs * 2)
         
