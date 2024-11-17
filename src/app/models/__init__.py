@@ -1,9 +1,9 @@
 """Data models for the web crawler."""
 
-from .page_data import PageData
-from .crawl_result import CrawlResult
+from .crawl_page_result import CrawlPageResult
+from .crawl_process_result import CrawlProcessResult
 
 __all__ = [
-    'PageData',
-    'CrawlResult',
+    'CrawlPageResult',
+    'CrawlProcessResult',
 ]
