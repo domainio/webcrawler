@@ -74,7 +74,7 @@ class WebCrawlerManager:
     def calc_batch_size(self) -> int:
         """Calculate the optimal batch size based on available cpu cores."""
         n_workers = cpu_count() if self.n_jobs == -1 else self.n_jobs
-        return max(100, n_workers * 2)
+        return max(Config.get_max_batch_size(), n_workers * 2)
     
     def crawl(self) -> CrawlProcessResult:
         """Execute the crawling process."""
@@ -107,4 +107,3 @@ class WebCrawlerManager:
         
         self.crawl_process.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         return self.crawl_process
-

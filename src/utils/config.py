@@ -37,3 +37,8 @@ class Config:
             return getattr(logging, os.getenv('LOG_LEVEL', 'INFO').upper())
         except AttributeError:
             return logging.INFO
+
+    @staticmethod
+    def get_max_batch_size() -> int:
+        """Get the maximum batch size for parallel processing."""
+        return int(os.getenv('MAX_BATCH_SIZE', '100'))
