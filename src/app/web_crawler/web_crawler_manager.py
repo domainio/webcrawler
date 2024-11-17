@@ -27,13 +27,15 @@ class WebCrawlerManager:
         self.n_jobs = n_jobs
         self.visited_urls = set()
         self.visited_lock = Lock()
-        self.root_url = root_url
+        
+        # CrawlProcessResult will validate and normalize the URL
         self.crawl_process = CrawlProcessResult(start_url=root_url)
+        self.root_url = self.crawl_process.start_url
         
         # Init web session configuration
         self.headers = {'User-Agent': Config.get_user_agent()}
         self.timeout = Config.get_timeout()
-        
+
     def create_worker(self) -> WebCrawlerWorker:
         """Create a new worker instance."""
         return WebCrawlerWorker(self.headers, self.timeout)
