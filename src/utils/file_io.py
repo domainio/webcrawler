@@ -14,15 +14,7 @@ def generate_filename(url: str) -> str:
     return f"crawl_{domain}_{timestamp}.tsv"
 
 def write(results: CrawlProcessResult, filename: str = None) -> str:
-    """Write crawling results to a TSV file in the configured output directory.
-    
-    Args:
-        results: The crawl results to write
-        filename: Optional filename, if not provided one will be generated
-        
-    Returns:
-        The full path to the written file
-    """
+    """Write crawling results to a TSV file in the configured output directory."""
     # Get output directory from config and ensure it exists
     output_dir = Config.get_results_dir()
     os.makedirs(output_dir, exist_ok=True)
