@@ -1,7 +1,7 @@
 from .config import Config
 from .logger import setup_logger
 from .file_io import write, generate_filename
-from .url_utils import validate_url, normalize_url
+from .url_utils import validate_url, normalize_url, make_full_url, get_domain, is_same_domain
 
 __all__ = [
     'Config',
@@ -9,5 +9,8 @@ __all__ = [
     'write',
     'generate_filename',
     'validate_url',
-    'normalize_url'
+    'normalize_url',
+    'make_full_url',
+    'get_domain',
+    'is_same_domain'
 ]

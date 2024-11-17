@@ -1,12 +1,11 @@
 import logging
 from datetime import datetime
-from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 from typing import Set, Tuple, Dict
 
 from ..models import CrawlPageResult
-from ...utils import validate_url, normalize_url
+from ...utils import validate_url, normalize_url, make_full_url, get_domain, is_same_domain
 
 class WebCrawlerWorker:
     """Worker class for crawling individual URLs."""
@@ -29,7 +28,7 @@ class WebCrawlerWorker:
         links = set()
         total_links = 0
         same_domain_count = 0
-        base_domain = urlparse(base_url).netloc
+        base_domain = get_domain(base_url)
 
         for link in soup.find_all('a'):
             href = link.get('href')
@@ -37,7 +36,7 @@ class WebCrawlerWorker:
                 continue
 
             try:
-                full_url = urljoin(base_url, href)
+                full_url = make_full_url(base_url, href)
                 if not validate_url(full_url):
                     continue
                     
@@ -46,7 +45,7 @@ class WebCrawlerWorker:
                     links.add(normalized_url)
                     total_links += 1
                     
-                    if urlparse(normalized_url).netloc == base_domain:
+                    if is_same_domain(normalized_url, base_domain):
                         same_domain_count += 1
             except Exception:
                 continue
