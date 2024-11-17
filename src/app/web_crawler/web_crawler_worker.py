@@ -10,15 +10,17 @@ from ...utils import validate_url, normalize_url, make_full_url, is_same_domain
 class WebCrawlerWorker:
     """Worker class for crawling individual URLs."""
     
-    def __init__(self, headers: Dict[str, str], timeout: int):
+    def __init__(self, headers: Dict[str, str], timeout: int, logger: logging.Logger):
         """Initialize the crawler worker.
         
         Args:
             headers: HTTP headers to use for requests
             timeout: Request timeout in seconds
+            logger: Logger instance
         """
         self.headers = headers
         self.timeout = timeout
+        self.logger = logger
         self.session = requests.Session()
         self.session.headers.update(headers)
 
@@ -85,7 +87,6 @@ class WebCrawlerWorker:
             )
 
         except requests.RequestException as e:
-            logging.error(f"Error crawling {url}: {str(e)}")
             return CrawlPageResult(
                 url=url,
                 depth=depth,
