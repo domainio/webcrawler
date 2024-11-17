@@ -5,14 +5,14 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 import validators
-from typing import Set, Tuple
+from typing import Set, Tuple, Dict
 
 from ..models import CrawlPageResult
 
 class WebCrawlerWorker:
     """Worker class for crawling individual URLs."""
     
-    def __init__(self, headers: dict, timeout: int):
+    def __init__(self, headers: Dict[str, str], timeout: int):
         """Initialize the crawler worker.
         
         Args:
@@ -34,7 +34,7 @@ class WebCrawlerWorker:
         for scheme in ['https://', 'http://']:
             try:
                 full_url = f"{scheme}{url}"
-                response = requests.head(full_url, timeout=5)
+                response = requests.head(full_url, timeout=self.timeout, headers=self.headers)
                 if response.status_code < 400:
                     return full_url
             except requests.RequestException:
@@ -74,23 +74,26 @@ class WebCrawlerWorker:
     def crawl_url(self, url: str, depth: int) -> CrawlPageResult:
         """Crawl a single URL and return results"""
         try:
-            response = self.session.get(url, timeout=self.timeout, allow_redirects=True)
+            # Normalize URL before crawling
+            normalized_url = self.normalize_url(url)
+            
+            response = self.session.get(normalized_url, timeout=self.timeout, allow_redirects=True)
             response.raise_for_status()
             
             content_type = response.headers.get('content-type', '').lower()
             if 'text/html' not in content_type:
                 return CrawlPageResult(
-                    url=url,
+                    url=normalized_url,
                     depth=depth,
                     ratio=0.0,
                     success=False,
                     error="Not an HTML page"
                 )
 
-            links, ratio = self.extract_links(response.text, url)
+            links, ratio = self.extract_links(response.text, normalized_url)
             
             return CrawlPageResult(
-                url=url,
+                url=normalized_url,
                 discovered_links=links,
                 depth=depth,
                 ratio=ratio,
