@@ -56,17 +56,22 @@ class WebCrawlerManager:
         """Process a batch of URLs in parallel."""
         worker = self.create_worker()
         
-        results = Parallel(n_jobs=self.n_jobs, prefer='threads')(
+        self.logger.info(f"Processing batch of {len(urls_batch)} URLs at depth {urls_batch[0][1]}")
+        results = Parallel(n_jobs=self.n_jobs)(
             delayed(worker.crawl_url)(url, depth) for url, depth in urls_batch
         )
         
         all_discovered_urls = set()
         crawled_pages = {}
         
+        successful = 0
         for result in results:
             all_discovered_urls.update(result.discovered_links)
             crawled_pages[result.url] = result
-            
+            if result.success:
+                successful += 1
+                
+        self.logger.info(f"Batch completed: {successful}/{len(urls_batch)} successful, discovered {len(all_discovered_urls)} new URLs")
         return all_discovered_urls, crawled_pages
 
     def calc_batch_size(self) -> int:
@@ -76,6 +81,7 @@ class WebCrawlerManager:
     
     def crawl(self) -> CrawlProcessResult:
         """Execute the crawling process."""
+        self.logger.info(f"Starting crawl from {self.root_url} with max depth {self.max_depth}")
         queue = [(self.root_url, 1)]
         batch_size = self.calc_batch_size()
         
@@ -96,4 +102,5 @@ class WebCrawlerManager:
                         queue.append((url, current_depth + 1))
                         
         self.crawl_process_result.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.logger.info(f"Crawl completed: {len(self.crawl_process_result.crawled_pages)} pages crawled, {len(self.crawl_process_result.all_discovered_urls)} URLs discovered")
         return self.crawl_process_result
