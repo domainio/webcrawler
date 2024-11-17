@@ -80,7 +80,7 @@ class WebCrawlerWorker:
         except Exception as e:
             self.logger.error(f"Error crawling {url}: {str(e)}")
             result = CrawlPageResult(
-                url=f"https://{url}",  # Add scheme to pass validation
+                url=url,
                 depth=depth,
                 ratio=0.0,
                 success=False,
