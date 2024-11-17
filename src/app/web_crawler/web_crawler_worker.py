@@ -23,6 +23,10 @@ class WebCrawlerWorker:
         self.session = requests.Session()
         self.session.headers.update(headers)
 
+    def validate_url(self, url: str) -> bool:
+        """Validate URL format using validators."""
+        return validators.url(url) if url else False
+
     def normalize_url(self, url: str) -> str:
         """Normalize URL with scheme."""
         parsed = urlparse(url)
@@ -56,13 +60,14 @@ class WebCrawlerWorker:
 
             try:
                 full_url = urljoin(base_url, href)
-                if not validators.url(full_url):
+                if not self.validate_url(full_url):
                     continue
-                
-                links.add(full_url)
+                    
+                normalized_url = self.normalize_url(full_url)
+                links.add(normalized_url)
                 total_links += 1
                 
-                if urlparse(full_url).netloc == base_domain:
+                if urlparse(normalized_url).netloc == base_domain:
                     same_domain_count += 1
             except Exception:
                 continue
@@ -73,7 +78,6 @@ class WebCrawlerWorker:
     def crawl_url(self, url: str, depth: int) -> CrawlPageResult:
         """Crawl a single URL and return results"""
         try:
-            # Normalize URL before crawling
             normalized_url = self.normalize_url(url)
             
             response = self.session.get(normalized_url, timeout=self.timeout, allow_redirects=True)
