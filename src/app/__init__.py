@@ -1,3 +1,8 @@
-from .web_crawler import WebCrawler
+"""Web crawler application package."""
 
-__all__ = ['WebCrawler']
+from .web_crawler import WebCrawlerFactory, WebCrawlerWorker
+
+__all__ = [
+    'WebCrawlerFactory',
+    'WebCrawlerWorker',
+]

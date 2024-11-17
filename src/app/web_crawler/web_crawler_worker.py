@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+import logging
+from datetime import datetime
+from urllib.parse import urljoin, urlparse
+import requests
+from bs4 import BeautifulSoup
+import validators
+from typing import Set, Tuple
+
+from ..models.crawl_models import PageData, CrawlResult
+
+class WebCrawlerWorker:
+    """Worker class for crawling individual URLs."""
+    
+    def __init__(self, headers: dict, timeout: int):
+        """Initialize the crawler worker.
+        
+        Args:
+            headers: HTTP headers to use for requests
+            timeout: Request timeout in seconds
+        """
+        self.headers = headers
+        self.timeout = timeout
+        self.session = requests.Session()
+        self.session.headers.update(headers)
+
+    def normalize_url(self, url: str) -> str:
+        """Normalize URL with scheme."""
+        parsed = urlparse(url)
+        if parsed.scheme:
+            return url
+            
+        # Try HTTPS first, then HTTP
+        for scheme in ['https://', 'http://']:
+            try:
+                full_url = f"{scheme}{url}"
+                response = requests.head(full_url, timeout=5)
+                if response.status_code < 400:
+                    return full_url
+            except requests.RequestException:
+                continue
+                
+        raise ValueError(f"Failed to verify URL: {url}")
+
+    def extract_links(self, html_content: str, base_url: str) -> Tuple[Set[str], float]:
+        """Extract and analyze links from HTML content."""
+        soup = BeautifulSoup(html_content, 'html.parser')
+        links = set()
+        total_links = 0
+        same_domain_count = 0
+        base_domain = urlparse(base_url).netloc
+
+        for link in soup.find_all('a'):
+            href = link.get('href')
+            if not href:
+                continue
+
+            try:
+                full_url = urljoin(base_url, href)
+                if not validators.url(full_url):
+                    continue
+                
+                links.add(full_url)
+                total_links += 1
+                
+                if urlparse(full_url).netloc == base_domain:
+                    same_domain_count += 1
+            except Exception:
+                continue
+
+        ratio = same_domain_count / total_links if total_links > 0 else 0
+        return links, ratio
+
+    def crawl_url(self, url: str, depth: int) -> CrawlResult:
+        """Crawl a single URL and return results.
+        
+        Args:
+            url: URL to crawl
+            depth: Current crawl depth
+            
+        Returns:
+            CrawlResult containing found links and page data
+        """
+        try:
+            response = self.session.get(url, timeout=self.timeout, allow_redirects=True)
+            response.raise_for_status()
+            
+            content_type = response.headers.get('content-type', '').lower()
+            if 'text/html' not in content_type:
+                return CrawlResult()
+
+            links, ratio = self.extract_links(response.text, url)
+            
+            page_data = PageData(
+                depth=depth,
+                ratio=ratio,
+                timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            )
+
+            return CrawlResult(
+                links=links,
+                data={url: page_data}
+            )
+
+        except requests.RequestException as e:
+            logging.error(f"Error crawling {url}: {str(e)}")
+            return CrawlResult()
