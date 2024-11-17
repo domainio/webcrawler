@@ -27,10 +27,8 @@ class WebCrawlerManager:
         self.n_jobs = n_jobs
         self.visited_urls = set()
         self.visited_lock = Lock()
-        
-        # CrawlProcessResult will validate and normalize the URL
-        self.crawl_process = CrawlProcessResult(start_url=root_url)
-        self.root_url = self.crawl_process.start_url
+        self.crawl_process_result = CrawlProcessResult(start_url=root_url)
+        self.root_url = self.crawl_process_result.start_url
         
         # Init web session configuration
         self.headers = {'User-Agent': Config.get_user_agent()}
@@ -87,8 +85,8 @@ class WebCrawlerManager:
                 continue
             
             new_urls, page_results = self.process_batch(current_batch)
-            self.crawl_process.crawled_pages.update(page_results)
-            self.crawl_process.all_discovered_urls.update(new_urls)
+            self.crawl_process_result.crawled_pages.update(page_results)
+            self.crawl_process_result.all_discovered_urls.update(new_urls)
             
             # Add new URLs to queue
             current_depth = current_batch[0][1]
@@ -97,5 +95,6 @@ class WebCrawlerManager:
                     if url not in self.visited_urls:
                         queue.append((url, current_depth + 1))
                         
-        self.crawl_process.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        return self.crawl_process
+        self.crawl_process_result.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        return self.crawl_process_result
+
