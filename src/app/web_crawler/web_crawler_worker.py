@@ -11,8 +11,8 @@ class WebCrawlerWorker:
     
     def __init__(self, headers: Dict[str, str], timeout: int, logger: logging.Logger):
         self.headers = headers
-        self.raw_timeout = timeout  # Store raw timeout value
-        self.timeout = aiohttp.ClientTimeout(total=timeout)  # aiohttp timeout object
+        self.raw_timeout = timeout
+        self.timeout = aiohttp.ClientTimeout(total=timeout)
         self.logger = logger
         
     def calc_page_rank(self, same_domain_count: int, total_links: int) -> float:
