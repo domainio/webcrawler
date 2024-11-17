@@ -13,7 +13,7 @@ def generate_filename(url: str) -> str:
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     return f"crawl_{domain}_{timestamp}.tsv"
 
-def write_results(results: CrawlProcessResult, filename: str = None) -> str:
+def write(results: CrawlProcessResult, filename: str = None) -> str:
     """Write crawling results to a TSV file in the configured output directory.
     
     Args:
