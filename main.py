@@ -2,7 +2,7 @@ import sys
 import logging
 from src.app.web_crawler import WebCrawlerManager
 from src.utils.logger import setup_logger
-from src.utils import file_io
+from src.utils import file_io, with_progress_bar
 
 def main():
     # Set up logging
@@ -22,7 +22,10 @@ def main():
     
     try:
         crawler = WebCrawlerManager(url, max_depth, logger)
-        results = crawler.crawl()
+        results = with_progress_bar(
+            operation=crawler.crawl,
+            desc=f"Crawling {url} (max depth: {max_depth})"
+        )
         output_path = file_io.write(results)
         logger.info(f"Results written to {output_path}")
     except Exception as e:

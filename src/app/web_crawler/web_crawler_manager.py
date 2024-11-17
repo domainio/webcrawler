@@ -4,7 +4,6 @@ from threading import Lock
 from typing import List, Set, Dict, Tuple
 from datetime import datetime
 from joblib import Parallel, delayed
-from tqdm import tqdm
 from multiprocessing import cpu_count
 
 from ...utils.config import Config
@@ -34,7 +33,6 @@ class WebCrawlerManager:
         # Init web session configuration
         self.headers = {'User-Agent': Config.get_user_agent()}
         self.timeout = Config.get_timeout()
-        
         
     def create_worker(self) -> WebCrawlerWorker:
         """Create a new worker instance."""
@@ -81,29 +79,21 @@ class WebCrawlerManager:
         queue = [(self.root_url, 1)]
         batch_size = self.calc_batch_size()
         
-        with tqdm(desc=f"Crawling (max depth: {self.max_depth})") as pbar:
-            while queue and queue[0][1] <= self.max_depth:
-                current_batch = self.prepare_batch(queue, batch_size)
-                if not current_batch:
-                    continue
-                
-                new_urls, page_results = self.process_batch(current_batch)
-                self.crawl_process.crawled_pages.update(page_results)
-                self.crawl_process.all_discovered_urls.update(new_urls)
-                
-                # Add new URLs to queue and update progress
-                current_depth = current_batch[0][1]
-                for url in new_urls:
-                    with self.visited_lock:
-                        if url not in self.visited_urls:
-                            queue.append((url, current_depth + 1))
-                
-                pbar.update(len(current_batch))
-                pbar.set_description(
-                    f"Depth: {current_depth}/{self.max_depth} "
-                    f"Queue: {len(queue)} "
-                    f"Crawled: {len(self.crawl_process.crawled_pages)}"
-                )
-        
+        while queue and queue[0][1] <= self.max_depth:
+            current_batch = self.prepare_batch(queue, batch_size)
+            if not current_batch:
+                continue
+            
+            new_urls, page_results = self.process_batch(current_batch)
+            self.crawl_process.crawled_pages.update(page_results)
+            self.crawl_process.all_discovered_urls.update(new_urls)
+            
+            # Add new URLs to queue
+            current_depth = current_batch[0][1]
+            for url in new_urls:
+                with self.visited_lock:
+                    if url not in self.visited_urls:
+                        queue.append((url, current_depth + 1))
+                        
         self.crawl_process.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         return self.crawl_process

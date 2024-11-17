@@ -28,7 +28,6 @@ class WebCrawlerWorker:
         links = set()
         total_links = 0
         same_domain_count = 0
-        base_domain = get_domain(base_url)
 
         for link in soup.find_all('a'):
             href = link.get('href')
@@ -45,7 +44,7 @@ class WebCrawlerWorker:
                     links.add(normalized_url)
                     total_links += 1
                     
-                    if is_same_domain(normalized_url, base_domain):
+                    if is_same_domain(normalized_url, base_url):
                         same_domain_count += 1
             except Exception:
                 continue

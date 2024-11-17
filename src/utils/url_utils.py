@@ -35,4 +35,4 @@ def get_domain(url: str) -> str:
 
 def is_same_domain(url1: str, url2: str) -> bool:
     """Check if two URLs belong to the same domain."""
-    return urlparse(url1).netloc == urlparse(url2).netloc
+    return get_domain(url1) == get_domain(url2)
