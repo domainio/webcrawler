@@ -2,29 +2,35 @@ from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field, validator
 from ...utils import validate_url, normalize_url
+from ...utils.config import Config
 
 class CrawlPageResult(BaseModel):
     """Result of crawling a single page."""
-    url: str = Field(description="URL of the crawled page")
-    links: List[str] = Field(default_factory=list, description="List of URLs discovered on this page")
-    same_domain_links_count: int = Field(description="Number of same-domain links found")
-    external_links_count: int = Field(description="Number of external domain links found")
-    depth: int = Field(description="Depth level in the crawl tree")
+    
+    url: str = Field(title="URL", description="URL of the crawled page")
+    links: List[str] = Field(title="Total Links Count", default_factory=list, description="List of URLs discovered on this page")
+    same_domain_links_count: int = Field(title="Same Domain Links Count", description="Number of same-domain links found")
+    external_links_count: int = Field(title="External Links Count", description="Number of external domain links found")
+    depth: int = Field(title="Depth", description="Depth level in the crawl tree")
     ratio: float = Field(
+        title="Ratio",
         default=0,
         description="Ratio of same-domain links to total links",
         ge=0,
         le=1
     )
     timestamp: str = Field(
+        title="Timestamp",
         default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         description="Timestamp when the page was crawled"
     )
     success: bool = Field(
+        title="Success",
         default=True,
         description="Whether the page was successfully crawled"
     )
     error: Optional[str] = Field(
+        title="Error",
         default=None,
         description="Error message if crawl failed"
     )

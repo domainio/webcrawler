@@ -2,7 +2,7 @@ import sys
 import logging
 from src.app.web_crawler import WebCrawlerManager
 from src.utils.logger import setup_logger
-from src.utils import save_crawl_results, with_progress_bar
+from src.utils import save_crawl_results, with_progress_bar, tsv_util
 
 def main():
     # Set up logging
@@ -28,6 +28,7 @@ def main():
         )
         output_path = save_crawl_results(results)
         logger.info(f"Results written to {output_path}")
+        tsv_util.display(results)
     except Exception as e:
         logger.error(f"Crawl failed: {str(e)}")
         sys.exit(1)
