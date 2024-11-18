@@ -34,7 +34,7 @@ class Config:
     @staticmethod
     def get_user_agent() -> str:
         """Get the User-Agent string for HTTP requests."""
-        return os.getenv('WEB_PAGE_USER_AGENT', 'Mozilla/5.0 (compatible; PythonCrawler/1.0; +http://example.com)')
+        return os.getenv('WEB_PAGE_USER_AGENT', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
 
     @staticmethod
     def get_timeout() -> int:
