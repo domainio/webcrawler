@@ -38,21 +38,24 @@ class WebCrawlerManager:
     async def _crawl_async(self) -> CrawlProcessResult:
         self.logger.info(f"Starting crawl from {self.root_url} with max depth {self.max_depth}")
         
+        current_depth = 1
         with self.visited_lock:
             self.visited_urls.add(self.root_url)
-            self.url_queue.put((1, self.root_url))
+            self.url_queue.put((current_depth, self.root_url))
             
         batch_size = self._calc_batch_size()
         
-        while not self.url_queue.empty() and self.url_queue.queue[0][0] <= self.max_depth:
+        while not self.url_queue.empty() and current_depth <= self.max_depth:
             urls_with_depth = self._prepare_batch(batch_size)
             if not urls_with_depth:
                 continue
             
             page_results = await self._process_batch(urls_with_depth)
-            self._update_process_result(page_results)
+            current_depth += 1
+            self._update_process_result(page_results, current_depth)
+            
             self.logger.info(self.process_result.format_progress(self.url_queue.qsize()))
-
+            
         return self.process_result
 
     def _create_worker(self) -> WebCrawlerWorker:
@@ -77,23 +80,21 @@ class WebCrawlerManager:
         results = await asyncio.gather(*tasks, return_exceptions=True)
         return results
 
-    def _update_process_result(self, page_results: List[CrawlPageResult]) -> None:
-        """Update process results and queue new URLs."""
+    def _update_process_result(self, page_results: List[CrawlPageResult], depth: int) -> None:
+        """Update process results and queue new URLs for next depth."""
         for result in page_results:
             self.process_result.crawled_pages[result.url] = result
             if result.success:
                 self.process_result.all_urls.update(set(result.links))
-                next_depth = result.depth + 1
-                if next_depth <= self.max_depth:
-                    self._queue_new_urls(result.links, next_depth)
+                self._queue_new_urls(result.links, depth)
 
-    def _queue_new_urls(self, new_urls: List[str], next_depth: int) -> None:
+    def _queue_new_urls(self, new_urls: List[str], depth: int) -> None:
         """Queue new unvisited URLs for crawling. Thread-safe."""
         for new_url in new_urls:
             with self.visited_lock:
                 if new_url not in self.visited_urls:
                     self.visited_urls.add(new_url)
-                    self.url_queue.put((next_depth, new_url))
+                    self.url_queue.put((depth, new_url))
 
     def _calc_batch_size(self) -> int:
         """Calculate the optimal batch size for async operations."""
