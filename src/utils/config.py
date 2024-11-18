@@ -9,8 +9,8 @@ env.read_env()
 class Config:
     """Configuration class to manage environment variables."""
     
-    CRAWL_RESULTS_DIR = env.str('CRAWL_RESULTS_DIR', './.crawls')
-    SCRAPE_DIR = env.str('SCRAPE_DIR', './.scrape')
+    JOBS_DIR = env.str('JOBS_DIR', '.jobs')
+    SCRAPE_DIR = env.str('SCRAPE_DIR', 'scrape')
     USER_AGENT = env.str('WEB_PAGE_USER_AGENT', 
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
     REQUEST_TIMEOUT = env.int('HTTP_REQUEST_TIMEOUT', 10)
@@ -27,8 +27,8 @@ class Config:
         return path
     
     @classmethod
-    def get_results_dir(cls) -> str:
-        return cls.get_abs_path(cls.CRAWL_RESULTS_DIR)
+    def get_jobs_dir(cls) -> str:
+        return cls.get_abs_path(cls.JOBS_DIR)
     
     @classmethod
     def get_scrape_dir(cls) -> str:

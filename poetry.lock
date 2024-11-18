@@ -659,6 +659,22 @@ files = [
 ]
 
 [[package]]
+name = "pathvalidate"
+version = "3.2.1"
+description = "pathvalidate is a Python library to sanitize/validate a string such as filenames/file-paths/etc."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pathvalidate-3.2.1-py3-none-any.whl", hash = "sha256:9a6255eb8f63c9e2135b9be97a5ce08f10230128c4ae7b3e935378b82b22c4c9"},
+    {file = "pathvalidate-3.2.1.tar.gz", hash = "sha256:f5d07b1e2374187040612a1fcd2bcb2919f8db180df254c9581bb90bf903377d"},
+]
+
+[package.extras]
+docs = ["Sphinx (>=2.4)", "sphinx-rtd-theme (>=1.2.2)", "urllib3 (<2)"]
+readme = ["path (>=13,<17)", "readmemaker (>=1.1.0)"]
+test = ["Faker (>=1.0.8)", "allpairspy (>=2)", "click (>=6.2)", "pytest (>=6.0.1)", "pytest-md-report (>=0.6.2)"]
+
+[[package]]
 name = "playwright"
 version = "1.48.0"
 description = "A high-level API to automate web browsers"
@@ -1155,4 +1171,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "d64eb5550409fb477f5e133d02ec74d33cc343f0b2e7d6b5813e3f2d1b31340f"
+content-hash = "fe9b7e1f0f95342a8ed8a86e4a2195cdc27e4a717e005e79205703ae825ba7ab"

@@ -15,6 +15,7 @@ env/
 # Crawler results
 .crawls/
 .scrape/
+.jobs/
 
 # Distribution / packaging
 dist/
