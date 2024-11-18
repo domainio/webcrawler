@@ -2,6 +2,8 @@ import logging
 import aiohttp
 from bs4 import BeautifulSoup
 from typing import Dict, Set, Tuple
+from urllib.parse import urlparse
+from datetime import datetime
 
 from ..models import CrawlPageResult
 from ...utils import validate_url, make_full_url, is_same_domain, normalize_url
@@ -45,51 +47,40 @@ class WebCrawlerWorker:
         return same_domain_links_count, external_links_count
 
     async def crawl_url(self, url: str, depth: int) -> CrawlPageResult:
+        """Crawl a single URL and return the results."""
         try:
-            normalized_url = normalize_url(url, self.raw_timeout, self.headers)
-            result = CrawlPageResult(
-                url=normalized_url,
-                depth=depth,
-                links=[],
-                same_domain_links_count=0,
-                external_links_count=0,
-                ratio=0.0,
-                success=False
-            )
-            
-            async with aiohttp.ClientSession(headers=self.headers, timeout=self.timeout) as session:
-                async with session.get(normalized_url, allow_redirects=True) as response:
-                    if response.status != 200:
-                        return result
-                        
-                    content_type = response.headers.get('content-type', '').lower()
-                    if 'text/html' not in content_type:
-                        return result
-                        
+            async with aiohttp.ClientSession(headers=self.headers) as session:
+                async with session.get(url, timeout=self.timeout) as response:
+                    response.raise_for_status()
                     content = await response.text()
                     
-                    links = await self._extract_links(content, normalized_url)
-                    same_domain_links_count, external_links_count = self._classify_links(links, normalized_url)
+                    links = await self._extract_links(content, url)
+                    same_domain_links_count, external_links_count = self._classify_links(links, url)
                     
-                    result.links = list(links)
-                    result.same_domain_links_count = same_domain_links_count
-                    result.external_links_count = external_links_count
-                    result.ratio = self._calc_page_rank(same_domain_links_count, len(links))
-                    result.success = True
-                    
-                    self.logger.debug(f"Successfully crawled {normalized_url}")
+                    result = CrawlPageResult(
+                        url=url,
+                        depth=depth,
+                        success=True,
+                        error=None,
+                        links=list(links),
+                        same_domain_links_count=same_domain_links_count,
+                        external_links_count=external_links_count,
+                        ratio=same_domain_links_count / len(links) if links else 0,
+                        timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    )
+                    self.logger.debug(f"Successfully crawled {url}")
+                    return result
                     
         except Exception as e:
             self.logger.error(f"Error crawling {url}: {str(e)}")
-            result = CrawlPageResult(
+            return CrawlPageResult(
                 url=url,
                 depth=depth,
+                success=False,
+                error=str(e),
                 links=[],
                 same_domain_links_count=0,
                 external_links_count=0,
-                ratio=0.0,
-                success=False,
-                error=str(e)
+                ratio=0,
+                timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             )
-            
-        return result

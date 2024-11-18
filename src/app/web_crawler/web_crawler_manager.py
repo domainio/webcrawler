@@ -85,9 +85,9 @@ class WebCrawlerManager:
     def _update_process_result(self, page_results: List[CrawlPageResult], depth: int, url_queue: List[Tuple[str, int]]) -> None:
         """Update process results and queue new URLs."""
         for result in page_results:
-            if not isinstance(result, Exception) and result.success:
-                self.process_result.crawled_pages[result.url] = result
-                self.process_result.all_urls.update(result.links)
+            self.process_result.crawled_pages[result.url] = result
+            if result.success:
+                self.process_result.all_urls.update(set(result.links))
                 self._queue_new_urls(result, depth, url_queue)
 
     def _queue_new_urls(self, result: CrawlPageResult, depth: int, url_queue: List[Tuple[str, int]]) -> None:
