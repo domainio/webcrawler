@@ -15,6 +15,7 @@ validators = "0.22.0"
 python-dotenv = "^1.0.1"
 pydantic = "^2.6.1"
 aiohttp = "^3.11.2"
+playwright = "^1.48.0"
 
 [build-system]
 requires = ["poetry-core"]

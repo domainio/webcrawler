@@ -1,7 +1,7 @@
 from .config import Config
+from .file_io import save_crawl_results
 from .logger import setup_logger
 from .url_utils import validate_url, normalize_url, make_full_url, get_domain, is_same_domain
-from .file_io import write, generate_filename
 from .interaction import with_progress_bar
 
 __all__ = [
@@ -12,7 +12,6 @@ __all__ = [
     'make_full_url',
     'get_domain',
     'is_same_domain',
-    'write',
-    'generate_filename',
+    'save_crawl_results',
     'with_progress_bar'
 ]

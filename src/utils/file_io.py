@@ -3,27 +3,32 @@ import os
 from datetime import datetime
 from typing import Dict, Any
 from urllib.parse import urlparse
+from pathlib import Path
 
 from ..app.models import CrawlProcessResult
 from .config import Config
 
-def generate_filename(url: str) -> str:
-    """Generate a filename based on domain and timestamp."""
+def _generate_filename(url: str, extension: str) -> str:
+    """Generate a filename based on domain and timestamp with specified extension."""
     domain = urlparse(url).netloc or url
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    return f"crawl_{domain}_{timestamp}.tsv"
+    return f"{domain}_{timestamp}.{extension}"
 
-def write(results: CrawlProcessResult, filename: str = None) -> str:
-    """Write crawling results to a TSV file in the configured output directory."""
-    # Get output directory from config and ensure it exists
+def save_scrape_content(url: str, content: str) -> str:
+    """Save scraped HTML content to a file."""
+    output_dir = Config.get_scrape_dir()
+    os.makedirs(output_dir, exist_ok=True)
+    filename = _generate_filename(url, "html")
+    output_path = os.path.join(output_dir, filename)
+    output_path.write_text(content)
+    return output_path
+
+def save_crawl_results(results: CrawlProcessResult) -> str:
+    """Save crawl results to a TSV file."""
     output_dir = Config.get_results_dir()
     os.makedirs(output_dir, exist_ok=True)
     
-    # Generate or use provided filename
-    if not filename:
-        filename = generate_filename(str(results.start_url))
-    
-    # Create full output path
+    filename = _generate_filename(results.start_url, "tsv")
     output_path = os.path.join(output_dir, filename)
     
     with open(output_path, 'w', newline='') as f:

@@ -21,6 +21,17 @@ class Config:
         return results_dir
 
     @staticmethod
+    def get_scrape_dir() -> str:
+        """Get the directory for storing scraped pages."""
+        scrape_dir = os.getenv('SCRAPE_DIR', './.scrape')
+        # Convert relative path to absolute path
+        if scrape_dir.startswith('./'):
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            relative_path = scrape_dir[2:]  # Remove './' but keep any other dots
+            return os.path.join(base_dir, relative_path)
+        return scrape_dir
+
+    @staticmethod
     def get_user_agent() -> str:
         """Get the User-Agent string for HTTP requests."""
         return os.getenv('WEB_PAGE_USER_AGENT', 'Mozilla/5.0 (compatible; PythonCrawler/1.0; +http://example.com)')
@@ -42,3 +53,8 @@ class Config:
     def get_max_batch_size() -> int:
         """Get the maximum batch size for parallel processing."""
         return int(os.getenv('MAX_BATCH_SIZE', '100'))
+
+    @staticmethod
+    def get_headless_mode() -> bool:
+        """Get whether to run browser in headless mode."""
+        return os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true'
