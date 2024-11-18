@@ -43,6 +43,37 @@ class CrawlProcessResult(BaseModel):
         except Exception as e:
             raise ValueError(f"Could not access URL {v}: {str(e)}")
 
+    @property
+    def elapsed_seconds(self) -> float:
+        """Calculate elapsed time in seconds."""
+        if not self.end_time:
+            current = datetime.now()
+        else:
+            current = datetime.strptime(self.end_time, '%Y-%m-%d %H:%M:%S')
+        start = datetime.strptime(self.start_time, '%Y-%m-%d %H:%M:%S')
+        return (current - start).total_seconds()
+    
+    @property
+    def urls_per_second(self) -> float:
+        """Calculate URLs processed per second."""
+        return len(self.crawled_pages) / (self.elapsed_seconds or 1)
+
+    def format_progress(self, queue_size: int) -> str:
+        """Format progress message."""
+        return (
+            f"Progress: {len(self.crawled_pages):,d} URLs processed "
+            f"({self.urls_per_second:.1f} URLs/sec), "
+            f"{queue_size:,d} URLs in queue"
+        )
+
+    def format_completion(self) -> str:
+        """Format completion message."""
+        return (
+            f"Crawl completed: {len(self.crawled_pages):,d} pages crawled "
+            f"in {self.elapsed_seconds:.1f} seconds "
+            f"({self.urls_per_second:.1f} URLs/sec)"
+        )
+
     class Config:
         json_schema_extra = {
             "example": {

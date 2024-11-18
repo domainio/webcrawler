@@ -34,11 +34,9 @@ class WebCrawlerManager:
     async def crawl_async(self) -> CrawlProcessResult:
         """Execute the crawling process asynchronously."""
         self.logger.info(f"Starting crawl from {self.root_url} with max depth {self.max_depth}")
-        self.start_time = datetime.now()
         
         url_queue = [(self.root_url, 1)]
         batch_size = self.calc_batch_size()
-        urls_processed = 0
         
         while url_queue and url_queue[0][1] <= self.max_depth:
             urls, depth = self.prepare_batch(url_queue, batch_size)
@@ -48,20 +46,11 @@ class WebCrawlerManager:
             page_results = await self.process_batch(urls, depth)
             self.update_process_result(page_results, depth, url_queue)
             
-            urls_processed += len(urls)
-            self.logger.info(
-                f"Progress: {urls_processed} URLs processed ({urls_processed / ((datetime.now() - self.start_time).total_seconds() or 1):.1f} URLs/sec), {len(url_queue)} URLs in queue"
-            )
+            self.logger.info(self.process_result.format_progress(len(url_queue)))
         
         # Finalize results
         self.process_result.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        total_time = (datetime.now() - self.start_time).total_seconds()
-        final_urls_per_second = urls_processed / total_time if total_time > 0 else 0
-        
-        self.logger.info(
-            f"Crawl completed: {urls_processed} pages crawled in {total_time:.1f} seconds "
-            f"({final_urls_per_second:.1f} URLs/sec)"
-        )
+        self.logger.info(self.process_result.format_completion())
         
         return self.process_result
     
