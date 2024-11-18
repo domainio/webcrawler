@@ -32,10 +32,7 @@ class WebCrawlerManager:
         return WebCrawlerWorker(self.headers, self.timeout, self.logger)
 
     def prepare_batch(self, url_queue: List[Tuple[str, int]], batch_size: int) -> List[Tuple[List[str], int]]:
-        """Prepare a batch of URLs at the same depth for processing. """
-        if not url_queue:
-            return [], 0
-            
+        """Prepare a batch of URLs at the same depth for processing."""
         urls_to_process = []
         current_depth = url_queue[0][1]
         
