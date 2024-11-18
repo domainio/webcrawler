@@ -9,7 +9,7 @@ from ..app.models import CrawlProcessResult
 from .config import Config
 from ..utils import tsv_util
 
-def get_job_path(root_url: str) -> Path:
+def _get_job_path(root_url: str) -> Path:
     """Get the job directory path for a given root URL."""
     domain = urlparse(root_url).netloc or root_url
     job_name = sanitize_filename(domain)[:255]
@@ -17,7 +17,7 @@ def get_job_path(root_url: str) -> Path:
 
 def save_scrape_content(root_url: str, url: str, content: str) -> str:
     """Save scraped HTML content to a file."""
-    job_path = get_job_path(root_url)
+    job_path = _get_job_path(root_url)
     url_dir = sanitize_filename(url)[:255]
     target_dir = job_path / Config.get_scrape_dir() / url_dir
     target_dir.mkdir(parents=True, exist_ok=True)
@@ -27,7 +27,7 @@ def save_scrape_content(root_url: str, url: str, content: str) -> str:
 
 def save_crawl_results(result: CrawlProcessResult) -> str:
     """Save crawl results to a TSV file."""
-    job_path = get_job_path(result.start_url)
+    job_path = _get_job_path(result.start_url)
     job_path.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     domain = urlparse(result.start_url).netloc or result.start_url
