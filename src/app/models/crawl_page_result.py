@@ -1,7 +1,8 @@
 from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field, validator
-from ...utils import validate_url, normalize_url
+
+from ...utils.url_utils import validate_url, normalize_url
 from ...utils.config import Config
 
 class CrawlPageResult(BaseModel):
