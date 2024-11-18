@@ -15,11 +15,11 @@ class WebCrawlerWorker:
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self.logger = logger
         
-    def calc_page_rank(self, same_domain_links_count: int, total_links_count: int) -> float:
+    def _calc_page_rank(self, same_domain_links_count: int, total_links_count: int) -> float:
         """Calculate the rank of a page based on its same domain links vs total links."""
         return same_domain_links_count / total_links_count if total_links_count > 0 else 0
     
-    async def extract_links(self, html_content: str, base_url: str) -> Set[str]:
+    async def _extract_links(self, html_content: str, base_url: str) -> Set[str]:
         """Extract and normalize links from HTML content."""
         soup = BeautifulSoup(html_content, 'html.parser')
         links = set()
@@ -33,7 +33,7 @@ class WebCrawlerWorker:
 
         return links
 
-    def classify_links(self, links: Set[str], base_url: str) -> Tuple[int, int]:
+    def _classify_links(self, links: Set[str], base_url: str) -> Tuple[int, int]:
         """Classify links as same-domain or external."""
         same_domain_links_count = sum(1 for link in links if is_same_domain(link, base_url))
         external_links_count = len(links) - same_domain_links_count
@@ -68,13 +68,13 @@ class WebCrawlerWorker:
                         
                     content = await response.text()
                     
-                    links = await self.extract_links(content, normalized_url)
-                    same_domain_links_count, external_links_count = self.classify_links(links, normalized_url)
+                    links = await self._extract_links(content, normalized_url)
+                    same_domain_links_count, external_links_count = self._classify_links(links, normalized_url)
                     
                     result.links = list(links)
                     result.same_domain_links_count = same_domain_links_count
                     result.external_links_count = external_links_count
-                    result.ratio = self.calc_page_rank(same_domain_links_count, len(links))
+                    result.ratio = self._calc_page_rank(same_domain_links_count, len(links))
                     result.success = True
                     
                     self.logger.debug(f"Successfully crawled {normalized_url}")
