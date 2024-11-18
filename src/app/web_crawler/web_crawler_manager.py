@@ -97,10 +97,10 @@ class WebCrawlerManager:
             for page_result in page_results:
                 if page_result.success:
                     self.process_result.crawled_pages[page_result.url] = page_result
-                    self.process_result.all_discovered_urls.update(page_result.discovered_links)
+                    self.process_result.all_urls.update(page_result.links)
                     
                     # Add new URLs to queue
-                    for new_url in page_result.discovered_links:
+                    for new_url in page_result.links:
                         with self.visited_lock:
                             if new_url not in self.visited_urls:
                                 url_queue.append((new_url, depth + 1))

@@ -23,7 +23,7 @@ class CrawlProcessResult(BaseModel):
         default_factory=dict,
         description="Dictionary mapping URLs to their crawl results"
     )
-    all_discovered_urls: Set[str] = Field(
+    all_urls: Set[str] = Field(
         default_factory=set,
         description="Set of all unique URLs discovered during the entire crawl"
     )
@@ -50,7 +50,7 @@ class CrawlProcessResult(BaseModel):
                 "crawled_pages": {
                     "https://example.com": {
                         "url": "https://example.com",
-                        "discovered_links": {
+                        "links": {
                             "https://example.com/about",
                             "https://example.com/products"
                         },
@@ -61,7 +61,7 @@ class CrawlProcessResult(BaseModel):
                         "error": ""
                     }
                 },
-                "all_discovered_urls": {
+                "all_urls": {
                     "https://example.com",
                     "https://example.com/about",
                     "https://example.com/products"

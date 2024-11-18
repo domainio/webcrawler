@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 class CrawlPageResult(BaseModel):
     """Result of crawling a single page."""
     url: str = Field(description="URL of the crawled page")
-    discovered_links: List[str] = Field(description="List of URLs discovered on this page")
+    links: List[str] = Field(description="List of URLs discovered on this page")
     same_domain_links_count: int = Field(description="Number of same-domain links found")
     external_links_count: int = Field(description="Number of external domain links found")
     depth: int = Field(description="Depth level in the crawl tree")
@@ -32,7 +32,7 @@ class CrawlPageResult(BaseModel):
         json_schema_extra = {
             "example": {
                 "url": "https://example.com",
-                "discovered_links": [
+                "links": [
                     "https://example.com/about",
                     "https://example.com/products",
                     "https://external.com"

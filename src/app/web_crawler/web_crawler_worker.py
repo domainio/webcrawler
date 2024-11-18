@@ -61,7 +61,7 @@ class WebCrawlerWorker:
             result = CrawlPageResult(
                 url=normalized_url,
                 depth=depth,
-                discovered_links=[],
+                links=[],
                 same_domain_links_count=0,
                 external_links_count=0,
                 ratio=0.0,
@@ -82,7 +82,7 @@ class WebCrawlerWorker:
                     links = await self.extract_links(content, normalized_url)
                     same_domain_links_count, external_links_count = self.classify_links(links, normalized_url)
                     
-                    result.discovered_links = list(links)
+                    result.links = list(links)
                     result.same_domain_links_count = same_domain_links_count
                     result.external_links_count = external_links_count
                     result.ratio = self.calc_page_rank(same_domain_links_count, len(links))
@@ -95,7 +95,7 @@ class WebCrawlerWorker:
             result = CrawlPageResult(
                 url=url,
                 depth=depth,
-                discovered_links=[],
+                links=[],
                 same_domain_links_count=0,
                 external_links_count=0,
                 ratio=0.0,
