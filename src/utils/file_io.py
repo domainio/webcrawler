@@ -33,14 +33,25 @@ def save_crawl_results(results: CrawlProcessResult) -> str:
     
     with open(output_path, 'w', newline='') as f:
         writer = csv.writer(f, delimiter='\t')
-        writer.writerow(['URL', 'Depth', 'Link Ratio', 'Discovered Links', 'Success', 'Error'])
+        writer.writerow([
+            'URL', 
+            'Depth', 
+            'Same Domain Links Count',
+            'Discovered Links Count',
+            'Ratio', 
+            'External Links Count', 
+            'Success', 
+            'Error'
+        ])
         
         for url, page_result in results.crawled_pages.items():
             writer.writerow([
                 url,
                 page_result.depth,
-                f"{page_result.ratio:.2f}",
+                page_result.same_domain_links_count,
                 len(page_result.discovered_links),
+                f"{page_result.ratio:.2f}",
+                page_result.external_links_count,
                 page_result.success,
                 page_result.error or 'None'
             ])

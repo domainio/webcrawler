@@ -15,16 +15,14 @@ class WebCrawlerWorker:
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self.logger = logger
         
-    def calc_page_rank(self, same_domain_count: int, total_links: int) -> float:
+    def calc_page_rank(self, same_domain_links_count: int, total_links_count: int) -> float:
         """Calculate the rank of a page based on its same domain links vs total links."""
-        return same_domain_count / total_links if total_links > 0 else 0
+        return same_domain_links_count / total_links_count if total_links_count > 0 else 0
     
-    async def extract_links(self, html_content: str, base_url: str) -> tuple[set[str], float]:
-        """Extract and analyze links from HTML content."""
+    async def extract_links(self, html_content: str, base_url: str) -> Set[str]:
+        """Extract and normalize links from HTML content."""
         soup = BeautifulSoup(html_content, 'html.parser')
         links = set()
-        total_links = 0
-        same_domain_count = 0
 
         for link in soup.find_all('a'):
             href = link.get('href')
@@ -39,16 +37,23 @@ class WebCrawlerWorker:
                 normalized_url = normalize_url(full_url, self.raw_timeout, self.headers)
                 if normalized_url not in links:
                     links.add(normalized_url)
-                    total_links += 1
-                    if is_same_domain(normalized_url, base_url):
-                        same_domain_count += 1
                         
             except Exception as e:
                 self.logger.debug(f"Error processing link {href}: {str(e)}")
                 continue
 
-        ratio = self.calc_page_rank(same_domain_count, total_links)
-        return links, ratio
+        return links
+
+    def classify_links(self, links: Set[str], base_url: str) -> Tuple[int, int]:
+        """Classify links as same-domain or external."""
+        same_domain_links_count = sum(1 for link in links if is_same_domain(link, base_url))
+        external_links_count = len(links) - same_domain_links_count
+        
+        total = same_domain_links_count + external_links_count
+        if total != len(links):
+            raise ValueError(f"Link classification mismatch: {total} classified vs {len(links)} total")
+            
+        return same_domain_links_count, external_links_count
 
     async def crawl_url(self, url: str, depth: int) -> CrawlPageResult:
         try:
@@ -56,6 +61,9 @@ class WebCrawlerWorker:
             result = CrawlPageResult(
                 url=normalized_url,
                 depth=depth,
+                discovered_links=[],
+                same_domain_links_count=0,
+                external_links_count=0,
                 ratio=0.0,
                 success=False
             )
@@ -70,11 +78,16 @@ class WebCrawlerWorker:
                         return result
                         
                     content = await response.text()
-                    links, ratio = await self.extract_links(content, normalized_url)
                     
-                    result.discovered_links = links
-                    result.ratio = ratio
+                    links = await self.extract_links(content, normalized_url)
+                    same_domain_links_count, external_links_count = self.classify_links(links, normalized_url)
+                    
+                    result.discovered_links = list(links)
+                    result.same_domain_links_count = same_domain_links_count
+                    result.external_links_count = external_links_count
+                    result.ratio = self.calc_page_rank(same_domain_links_count, len(links))
                     result.success = True
+                    
                     self.logger.debug(f"Successfully crawled {normalized_url}")
                     
         except Exception as e:
@@ -82,6 +95,9 @@ class WebCrawlerWorker:
             result = CrawlPageResult(
                 url=url,
                 depth=depth,
+                discovered_links=[],
+                same_domain_links_count=0,
+                external_links_count=0,
                 ratio=0.0,
                 success=False,
                 error=str(e)
