@@ -21,9 +21,9 @@ def save_scrape_content(url: str, content: str) -> str:
     output_dir = Config.get_scrape_dir()
     os.makedirs(output_dir, exist_ok=True)
     filename = _generate_filename(url, "html")
-    output_path = os.path.join(output_dir, filename)
+    output_path = Path(output_dir) / filename
     output_path.write_text(content)
-    return output_path
+    return str(output_path)
 
 def save_crawl_results(result: CrawlProcessResult) -> str:
     """Save crawl results to a TSV file."""

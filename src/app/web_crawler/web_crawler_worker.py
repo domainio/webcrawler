@@ -6,7 +6,9 @@ from urllib.parse import urlparse
 from datetime import datetime
 
 from ..models import CrawlPageResult
+from ..scraper import Scraper
 from ...utils import validate_url, make_full_url, is_same_domain, normalize_url
+
 
 class WebCrawlerWorker:
     """Worker class for crawling individual URLs asynchronously."""
@@ -16,7 +18,8 @@ class WebCrawlerWorker:
         self.raw_timeout = timeout
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self.logger = logger
-        
+        self.scraper = Scraper(logger)
+
     def _calc_page_rank(self, same_domain_links_count: int, total_links_count: int) -> float:
         """Calculate the rank of a page based on its same domain links vs total links."""
         return same_domain_links_count / total_links_count if total_links_count > 0 else 0
@@ -53,7 +56,7 @@ class WebCrawlerWorker:
                 async with session.get(url, timeout=self.timeout) as response:
                     response.raise_for_status()
                     content = await response.text()
-                    
+                    await self.scraper.scrape(url)
                     links = await self._extract_links(content, url)
                     same_domain_links_count, external_links_count = self._classify_links(links, url)
                     
@@ -68,7 +71,7 @@ class WebCrawlerWorker:
                         ratio=same_domain_links_count / len(links) if links else 0,
                         timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     )
-                    self.logger.debug(f"Successfully crawled {url}")
+                    self.logger.debug(f"Successfully crawled and scraped {url}")
                     return result
                     
         except Exception as e:
