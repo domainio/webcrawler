@@ -28,19 +28,8 @@ class WebCrawlerWorker:
             href = link.get('href')
             if not href:
                 continue
-
-            try:
-                full_url = make_full_url(base_url, href)
-                if not validate_url(full_url):
-                    continue
-                    
-                normalized_url = normalize_url(full_url, self.raw_timeout, self.headers)
-                if normalized_url not in links:
-                    links.add(normalized_url)
-                        
-            except Exception as e:
-                self.logger.debug(f"Error processing link {href}: {str(e)}")
-                continue
+            full_url = make_full_url(base_url, href)
+            links.add(full_url)
 
         return links
 

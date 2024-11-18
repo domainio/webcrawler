@@ -1,11 +1,12 @@
 from typing import List, Optional
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
+from ...utils import validate_url, normalize_url
 
 class CrawlPageResult(BaseModel):
     """Result of crawling a single page."""
     url: str = Field(description="URL of the crawled page")
-    links: List[str] = Field(description="List of URLs discovered on this page")
+    links: List[str] = Field(default_factory=list, description="List of URLs discovered on this page")
     same_domain_links_count: int = Field(description="Number of same-domain links found")
     external_links_count: int = Field(description="Number of external domain links found")
     depth: int = Field(description="Depth level in the crawl tree")
@@ -28,7 +29,24 @@ class CrawlPageResult(BaseModel):
         description="Error message if crawl failed"
     )
 
+    @validator('links', pre=True)
+    def validate_links(cls, v):
+        """Validate and normalize URLs in the links list, skipping invalid ones."""
+        if not v:
+            return []
+        
+        valid_links = []
+        for url in v:
+            try:
+                if validate_url(url):
+                    normalized = normalize_url(url, Config.get_timeout(), {'User-Agent': Config.get_user_agent()})
+                    valid_links.append(normalized)
+            except Exception:
+                continue
+        return valid_links
+
     class Config:
+        arbitrary_types_allowed = True
         json_schema_extra = {
             "example": {
                 "url": "https://example.com",
