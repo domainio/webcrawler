@@ -28,24 +28,21 @@ class WebCrawlerManager:
         self.timeout = Config.get_timeout()
 
     def crawl(self) -> CrawlProcessResult:
-        """Execute the crawling process."""
-        return asyncio.run(self.crawl_async())
+        return asyncio.run(self._crawl_async())
         
-    async def crawl_async(self) -> CrawlProcessResult:
-        """Execute the crawling process asynchronously."""
+    async def _crawl_async(self) -> CrawlProcessResult:
         self.logger.info(f"Starting crawl from {self.root_url} with max depth {self.max_depth}")
         
         url_queue = [(self.root_url, 1)]
-        batch_size = self.calc_batch_size()
+        batch_size = self._calc_batch_size()
         
         while url_queue and url_queue[0][1] <= self.max_depth:
-            urls, depth = self.prepare_batch(url_queue, batch_size)
+            urls, depth = self._prepare_batch(url_queue, batch_size)
             if not urls:
                 continue
             
-            page_results = await self.process_batch(urls, depth)
-            self.update_process_result(page_results, depth, url_queue)
-            
+            page_results = await self._process_batch(urls, depth)
+            self._update_process_result(page_results, depth, url_queue)
             self.logger.info(self.process_result.format_progress(len(url_queue)))
         
         # Finalize results
@@ -54,11 +51,11 @@ class WebCrawlerManager:
         
         return self.process_result
     
-    def create_worker(self) -> WebCrawlerWorker:
+    def _create_worker(self) -> WebCrawlerWorker:
         """Create a new worker instance."""
         return WebCrawlerWorker(self.headers, self.timeout, self.logger)
 
-    def prepare_batch(self, url_queue: List[Tuple[str, int]], batch_size: int) -> List[Tuple[List[str], int]]:
+    def _prepare_batch(self, url_queue: List[Tuple[str, int]], batch_size: int) -> List[Tuple[List[str], int]]:
         """Prepare a batch of URLs at the same depth for processing."""
         urls_to_process = []
         current_depth = url_queue[0][1]
@@ -72,9 +69,9 @@ class WebCrawlerManager:
                 
         return urls_to_process, current_depth
 
-    async def process_batch(self, urls: List[str], depth: int) -> List[CrawlPageResult]:
+    async def _process_batch(self, urls: List[str], depth: int) -> List[CrawlPageResult]:
         """Process a batch of URLs in parallel."""
-        worker = self.create_worker()
+        worker = self._create_worker()
         self.logger.info(f"Processing {len(urls)} URLs at depth {depth}")
         
         results = await asyncio.gather(
@@ -85,22 +82,22 @@ class WebCrawlerManager:
         self.logger.info(f"Batch completed: processed {len(urls)} URLs")
         return results
 
-    def update_process_result(self, page_results: List[CrawlPageResult], depth: int, url_queue: List[Tuple[str, int]]) -> None:
+    def _update_process_result(self, page_results: List[CrawlPageResult], depth: int, url_queue: List[Tuple[str, int]]) -> None:
         """Update process results and queue new URLs."""
         for result in page_results:
             if not isinstance(result, Exception) and result.success:
                 self.process_result.crawled_pages[result.url] = result
                 self.process_result.all_urls.update(result.links)
-                self.queue_new_urls(result, depth, url_queue)
+                self._queue_new_urls(result, depth, url_queue)
 
-    def queue_new_urls(self, result: CrawlPageResult, depth: int, url_queue: List[Tuple[str, int]]) -> None:
+    def _queue_new_urls(self, result: CrawlPageResult, depth: int, url_queue: List[Tuple[str, int]]) -> None:
         """Queue new unvisited URLs for crawling."""
         for new_url in result.links:
             with self.visited_lock:
                 if new_url not in self.visited_urls:
                     url_queue.append((new_url, depth + 1))
 
-    def calc_batch_size(self) -> int:
+    def _calc_batch_size(self) -> int:
         """Calculate the optimal batch size for async operations."""
         n_workers = cpu_count() if self.n_jobs == -1 else self.n_jobs
         return max(Config.get_max_batch_size(), n_workers * 8)
