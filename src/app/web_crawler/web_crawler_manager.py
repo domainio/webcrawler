@@ -27,6 +27,44 @@ class WebCrawlerManager:
         self.headers = {'User-Agent': Config.get_user_agent()}
         self.timeout = Config.get_timeout()
 
+    def crawl(self) -> CrawlProcessResult:
+        """Execute the crawling process."""
+        return asyncio.run(self.crawl_async())
+        
+    async def crawl_async(self) -> CrawlProcessResult:
+        """Execute the crawling process asynchronously."""
+        self.logger.info(f"Starting crawl from {self.root_url} with max depth {self.max_depth}")
+        self.start_time = datetime.now()
+        
+        url_queue = [(self.root_url, 1)]
+        batch_size = self.calc_batch_size()
+        urls_processed = 0
+        
+        while url_queue and url_queue[0][1] <= self.max_depth:
+            urls, depth = self.prepare_batch(url_queue, batch_size)
+            if not urls:
+                continue
+            
+            page_results = await self.process_batch(urls, depth)
+            self.update_process_result(page_results, depth, url_queue)
+            
+            urls_processed += len(urls)
+            self.logger.info(
+                f"Progress: {urls_processed} URLs processed ({urls_processed / ((datetime.now() - self.start_time).total_seconds() or 1):.1f} URLs/sec), {len(url_queue)} URLs in queue"
+            )
+        
+        # Finalize results
+        self.process_result.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        total_time = (datetime.now() - self.start_time).total_seconds()
+        final_urls_per_second = urls_processed / total_time if total_time > 0 else 0
+        
+        self.logger.info(
+            f"Crawl completed: {urls_processed} pages crawled in {total_time:.1f} seconds "
+            f"({final_urls_per_second:.1f} URLs/sec)"
+        )
+        
+        return self.process_result
+    
     def create_worker(self) -> WebCrawlerWorker:
         """Create a new worker instance."""
         return WebCrawlerWorker(self.headers, self.timeout, self.logger)
@@ -58,59 +96,22 @@ class WebCrawlerManager:
         self.logger.info(f"Batch completed: processed {len(urls)} URLs")
         return results
 
+    def update_process_result(self, page_results: List[CrawlPageResult], depth: int, url_queue: List[Tuple[str, int]]) -> None:
+        """Update process results and queue new URLs."""
+        for result in page_results:
+            if not isinstance(result, Exception) and result.success:
+                self.process_result.crawled_pages[result.url] = result
+                self.process_result.all_urls.update(result.links)
+                self.queue_new_urls(result, depth, url_queue)
+
+    def queue_new_urls(self, result: CrawlPageResult, depth: int, url_queue: List[Tuple[str, int]]) -> None:
+        """Queue new unvisited URLs for crawling."""
+        for new_url in result.links:
+            with self.visited_lock:
+                if new_url not in self.visited_urls:
+                    url_queue.append((new_url, depth + 1))
+
     def calc_batch_size(self) -> int:
         """Calculate the optimal batch size for async operations."""
         n_workers = cpu_count() if self.n_jobs == -1 else self.n_jobs
         return max(Config.get_max_batch_size(), n_workers * 8)
-
-    async def crawl_async(self) -> CrawlProcessResult:
-        """Execute the crawling process asynchronously."""
-        self.logger.info(f"Starting crawl from {self.root_url} with max depth {self.max_depth}")
-        self.start_time = datetime.now()
-        
-        url_queue = [(self.root_url, 1)]
-        batch_size = self.calc_batch_size()
-        urls_processed = 0
-        
-        while url_queue and url_queue[0][1] <= self.max_depth:
-            urls, depth = self.prepare_batch(url_queue, batch_size)
-            if not urls:
-                continue
-            
-            page_results = await self.process_batch(urls, depth)
-            
-            # Update results and queue new URLs
-            for result in page_results:
-                if not isinstance(result, Exception) and result.success:
-                    self.process_result.crawled_pages[result.url] = result
-                    self.process_result.all_urls.update(result.links)
-                    
-                    # Queue new URLs for next depth
-                    for new_url in result.links:
-                        with self.visited_lock:
-                            if new_url not in self.visited_urls:
-                                url_queue.append((new_url, depth + 1))
-            
-            urls_processed += len(urls)
-            elapsed_seconds = (datetime.now() - self.start_time).total_seconds()
-            urls_per_second = urls_processed / elapsed_seconds if elapsed_seconds > 0 else 0
-            self.logger.info(
-                f"Progress: {urls_processed} URLs processed ({urls_per_second:.1f} URLs/sec), "
-                f"{len(url_queue)} URLs in queue"
-            )
-        
-        # Finalize results
-        self.process_result.end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        total_time = (datetime.now() - self.start_time).total_seconds()
-        final_urls_per_second = urls_processed / total_time if total_time > 0 else 0
-        
-        self.logger.info(
-            f"Crawl completed: {urls_processed} pages crawled in {total_time:.1f} seconds "
-            f"({final_urls_per_second:.1f} URLs/sec)"
-        )
-        
-        return self.process_result
-
-    def crawl(self) -> CrawlProcessResult:
-        """Execute the crawling process."""
-        return asyncio.run(self.crawl_async())
