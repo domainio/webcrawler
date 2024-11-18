@@ -8,6 +8,7 @@ from multiprocessing import cpu_count
 from ..models import CrawlProcessResult, CrawlPageResult
 from ...utils import Config
 from .web_crawler_worker import WebCrawlerWorker
+from ..scraper import Scraper
 
 
 class WebCrawlerManager:
@@ -18,6 +19,7 @@ class WebCrawlerManager:
         self.max_depth = max_depth
         self.n_jobs = n_jobs
         self.root_url = root_url
+        self.scraper = Scraper(logger, root_url)
         
         # Thread-safe queue for URL processing
         self.url_queue = PriorityQueue()
@@ -60,7 +62,7 @@ class WebCrawlerManager:
 
     def _create_worker(self) -> WebCrawlerWorker:
         """Create a new worker instance."""
-        return WebCrawlerWorker(self.headers, self.timeout, self.logger)
+        return WebCrawlerWorker(self.headers, self.timeout, self.logger, self.scraper)
 
     def _prepare_batch(self, batch_size: int) -> List[Tuple[str, int]]:
         """Prepare a batch of URLs with their depths for processing.

@@ -11,9 +11,10 @@ from ...utils.config import Config
 class Scraper:
     """Core scraper component that handles web page content extraction and storage."""
     
-    def __init__(self, logger: logging.Logger):
-        """Initialize scraper with logger."""
+    def __init__(self, logger: logging.Logger, root_url: str):
+        """Initialize scraper with logger and root URL."""
         self.logger = logger
+        self.root_url = root_url
         self.save_dir = Path(Config.get_scrape_dir())
         self.save_dir.mkdir(parents=True, exist_ok=True)
         
@@ -47,7 +48,7 @@ class Scraper:
         return content, title
         
     async def _save_content(self, url: str, content: str) -> Path:
-        return save_scrape_content(url, content)
+        return save_scrape_content(self.root_url,url, content)
         
     def _create_result(self, url: str, title: str, saved_path: Path) -> Dict[str, Any]:
         """Create successful scrape result."""

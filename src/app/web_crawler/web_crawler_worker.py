@@ -13,12 +13,12 @@ from ...utils import validate_url, make_full_url, is_same_domain, normalize_url
 class WebCrawlerWorker:
     """Worker class for crawling individual URLs asynchronously."""
     
-    def __init__(self, headers: Dict[str, str], timeout: int, logger: logging.Logger):
+    def __init__(self, headers: Dict[str, str], timeout: int, logger: logging.Logger, scraper: Scraper):
         self.headers = headers
         self.raw_timeout = timeout
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self.logger = logger
-        self.scraper = Scraper(logger)
+        self.scraper = scraper
 
     def _calc_page_rank(self, same_domain_links_count: int, total_links_count: int) -> float:
         """Calculate the rank of a page based on its same domain links vs total links."""
