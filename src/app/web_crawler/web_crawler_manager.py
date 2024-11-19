@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import threading
+import datetime
 from queue import PriorityQueue
 from typing import Dict, List, Tuple
 from multiprocessing import cpu_count
@@ -58,8 +59,14 @@ class WebCrawlerManager:
             current_depth += 1
             self._update_process_result(page_results, current_depth)
             
+            
             self.logger.info(self.process_result.format_progress(self.url_queue.qsize()))
             
+        # Set end completion stats
+        self.process_result.max_depth_reached = current_depth - 1
+        self.process_result.end_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.logger.info(self.process_result.format_completion())
+        
         return self.process_result
 
     def _create_worker(self) -> WebCrawlerWorker:

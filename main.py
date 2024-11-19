@@ -18,7 +18,7 @@ def main(url, max_depth):
             desc=f"Crawling {url} (max depth: {max_depth})"
         )
         output_path = file_io.save_crawl_results(results)
-        logger.info(f"Results written to {output_path}")
+        logger.info(f"Report written to {output_path}")
         tsv_util.display(results)
     except Exception as e:
         logger.error(f"Crawl failed: {str(e)}")

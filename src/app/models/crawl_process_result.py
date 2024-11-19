@@ -19,6 +19,10 @@ class CrawlProcessResult(BaseModel):
         default="",
         description="Timestamp when the crawl completed"
     )
+    max_depth_reached: int = Field(
+        default=0,
+        description="Maximum depth reached during crawl"
+    )
     crawled_pages: Dict[str, CrawlPageResult] = Field(
         default_factory=dict,
         description="Dictionary mapping URLs to their crawl results"
@@ -69,9 +73,13 @@ class CrawlProcessResult(BaseModel):
     def format_completion(self) -> str:
         """Format completion message."""
         return (
-            f"Crawl completed: {len(self.crawled_pages):,d} pages crawled "
-            f"in {self.elapsed_seconds:.1f} seconds "
-            f"({self.urls_per_second:.1f} URLs/sec)"
+            f"Crawl completed in {self.elapsed_seconds:.1f} seconds:\n"
+            f"- Processed: {len(self.crawled_pages):,d} URLs\n"
+            f"- Discovered: {len(self.all_urls):,d} total URLs\n"
+            f"- Max depth reached: {self.max_depth_reached}\n"
+            f"- Speed: {self.urls_per_second:.1f} URLs/sec\n"
+            f"- Start time: {self.start_time}\n"
+            f"- End time: {self.end_time}"
         )
 
     class Config:
@@ -98,6 +106,7 @@ class CrawlProcessResult(BaseModel):
                     "https://example.com/products"
                 },
                 "start_time": "2024-02-14 12:00:00",
-                "end_time": "2024-02-14 12:01:00"
+                "end_time": "2024-02-14 12:01:00",
+                "max_depth_reached": 1
             }
         }
