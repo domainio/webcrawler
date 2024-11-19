@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "webcrawler"
 version = "0.1.0"
-description = ""
+description = "High-performance asynchronous web crawler with integrated scraping capabilities"
 authors = ["Erez Zohar <erezhr@gmail.com>"]
 readme = "README.md"
 
