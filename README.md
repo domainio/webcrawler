@@ -4,203 +4,192 @@ A high-performance, asynchronous web crawler with integrated scraping capabiliti
 
 ## Key Features
 
-- **Asynchronous Processing**: Multi-threaded crawling with configurable worker count
+- **Asynchronous Processing**: 
+  - Asynchronous URL crawling and content scraping
+  - Batch processing with configurable batch sizes
+  - Efficient resource utilization
 - **Smart Content Extraction**: 
   - Playwright-based dynamic content scraping
-  - BeautifulSoup4 for static HTML parsing
   - Handles JavaScript-rendered content
-- **Efficient Resource Management**:
-  - Shared browser instance across workers
-  - Thread-safe URL queue and visited tracking
-  - Automatic CPU core optimization
+  - Configurable timeouts and retries
+- **Metrics and Progress Tracking**:
+  - Real-time crawling metrics
+  - Progress visualization with tqdm
+  - Comprehensive crawl statistics
 - **Robust Error Handling**:
-  - Automatic retry mechanisms
-  - Comprehensive error logging
+  - Per-URL error tracking
+  - Detailed error logging
   - Process recovery capabilities
 - **Organized Output**:
-  - Domain-specific job directories
   - Structured content storage
-  - Detailed crawl statistics
+  - TSV report generation
+  - Detailed crawl results
 
 ## Architecture
 
-The crawler is built on three core components working in harmony:
+The crawler consists of three main components:
 
 1. **WebCrawlerManager**
-   - Coordinates the entire crawling process
-   - Manages shared resources and state
-   - Handles worker creation and scheduling
-   - Processes final results
+   - Manages the crawling process
+   - Handles URL queue and depth tracking
+   - Coordinates batch processing
+   - Collects and aggregates results
 
 2. **WebCrawlerWorker**
    - Processes individual URLs
-   - Extracts and analyzes links
-   - Manages depth tracking
-   - Handles page-level errors
+   - Extracts and validates links
+   - Manages page-level operations
+   - Reports crawl results
 
 3. **Scraper**
-   - Controls browser automation
-   - Extracts page content
-   - Handles dynamic content
+   - Controls Playwright browser automation
+   - Handles page navigation and content extraction
    - Manages content storage
+   - Reports scraping metrics
 
-## Component Workflow
+### Data Models
 
-The following diagram illustrates the component interaction flow:
+The crawler uses Pydantic models for robust data validation and serialization:
 
-```mermaid
-graph TD
-    A[main.py] -->|1. Initialize| B[WebCrawlerManager]
-    B -->|2. Configure| C[Logger]
-    B -->|3. Load| D[Config]
-    B -->|4. Create| S[Scraper]
-    
-    subgraph "Crawl Process"
-        B -->|5. Initialize Queue| Q[URL Priority Queue]
-        B -->|6. Create Worker| E[WebCrawlerWorker]
-        E -->|7. Process URLs| Q
-    end
-    
-    subgraph "Worker Processing"
-        E -->|8. Fetch Page| I[HTTP Request]
-        I -->|9. Extract Content| J[BeautifulSoup]
-        J -->|10. Extract Links| K[Link Analysis]
-        K -->|11. Classify Links| L[Domain Analysis]
-    end
-    
-    subgraph "Scraping Process"
-        E -->|12. Trigger Scrape| S
-        S -->|13. Setup| P[Playwright Browser]
-        P -->|14. Navigate| W[Web Page]
-        W -->|15. Extract| C1[Content & Title]
-        C1 -->|16. Save| F1[HTML Files]
-    end
-    
-    subgraph "Result Collection"
-        L -->|17. Create| R1[CrawlPageResult]
-        R1 -->|18. Update| R2[CrawlProcessResult]
-        R2 -->|19. Write| T[TSV Output]
-    end
-```
+- `CrawlProcessResult`: Tracks overall crawl process including:
+  - Crawled pages
+  - All discovered URLs
+  - Process statistics
+  - Timing information
+
+- `CrawlPageResult`: Represents individual page crawl results with:
+  - URL and depth information
+  - Link statistics (same-domain vs external)
+  - Success/error status
+  - Timestamp data
 
 ## Installation
 
 ### Prerequisites
 
 - Python 3.11+
-- [Poetry](https://python-poetry.org/) for dependency management
+- Poetry (Python package manager)
 
-### Steps
+### Setup
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/webcrawler.git
-cd webcrawler
-```
+1. Extract the project:
+   ```bash
+   unzip webcraler.zip -d <local-directory>
+   cd <local-directory>
+   ```
 
-2. Install Poetry (if not already installed):
-```bash
-# macOS/Linux
-curl -sSL https://install.python-poetry.org | python3 -
+2. Create and activate a Python virtual environment:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On macOS/Linux
+   # Or on Windows:
+   # .venv\Scripts\activate
+   ```
 
-# Windows PowerShell
-(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
-```
+3. Install dependencies using Poetry:
+   ```bash
+   poetry install
+   ```
 
-3. Configure Poetry to create virtual environment in project directory (optional):
-```bash
-poetry config virtualenvs.in-project true
-```
+4. (Optional) Install Playwright browser - only needed if you haven't installed Chromium before:
+   ```bash
+   poetry run playwright install chromium
+   ```
 
-4. Install dependencies:
-```bash
-# Install all dependencies
-poetry install
+Note: The Playwright package is required for the crawler to work, but installing the browser is optional if you already have Chromium installed on your system.
 
-# Install Playwright browsers
-poetry run playwright install
-```
+### Environment Setup
 
-5. Create and configure `.env`:
+Create a `.env` file in the project root with your configuration:
+
 ```env
-JOBS_DIR=".jobs"
-SCRAPE_DIR="scrape"
-WEB_PAGE_USER_AGENT="Mozilla/5.0..."
-HTTP_REQUEST_TIMEOUT=10
-LOG_LEVEL=DEBUG
+JOBS_DIR=.jobs
+SCRAPE_DIR=scrape
+LOG_LEVEL=INFO
 MAX_BATCH_SIZE=100
 BROWSER_HEADLESS=true
 ```
 
-## Dependencies
-
-Managed through Poetry (`pyproject.toml`):
-
-- **Core**:
-  - Python 3.11+
-  - aiohttp: Async HTTP client
-  - Playwright: Browser automation
-  - BeautifulSoup4: HTML parsing
-
-- **Utilities**:
-  - environs: Environment management
-  - pathvalidate: Path sanitization
-  - pydantic: Data validation
-  - tabulate: Output formatting
-
-View all dependencies:
-```bash
-poetry show
-```
-
 ## Usage
 
-### Basic Usage
+Basic usage with command line interface:
+
 ```bash
-poetry run python -m src.app.web_crawler <root_url> [options]
+python main.py <url> <max_depth>
 ```
 
-### Options
-- `--depth`: Maximum crawl depth (default: 3)
-- `--workers`: Number of concurrent workers (-1 for CPU count, default: -1)
-- `--batch-size`: URLs per batch (default: 100)
-- `--timeout`: Request timeout in seconds (default: 10)
-- `--headless`: Run browser in headless mode (default: true)
-
-### Examples
+Example:
 ```bash
-# Basic crawl with default settings
-poetry run python -m src.app.web_crawler https://example.com
-
-# Deep crawl with custom settings
-poetry run python -m src.app.web_crawler https://example.com --depth 5 --workers 4 --batch-size 50
-
-# Interactive mode with visible browser
-poetry run python -m src.app.web_crawler https://example.com --headless false```
-
-## Output Structure
-
-```
-.jobs/
-└── domain.com/                 # Domain-specific directory
-    ├── scrape/                # Scraped content
-    │   └── url_hash/          # URL-specific directory
-    │       └── content.html   # Scraped HTML content
-    └── results/               # Crawl results
-        └── crawl_TIMESTAMP.tsv  # Detailed crawl data
+python main.py https://example.com 3
 ```
 
-### TSV Output Fields
-- `url`: Crawled URL
-- `depth`: Crawl depth from root
-- `success`: Crawl success status
-- `error`: Error message (if any)
-- `links_count`: Total links found
-- `same_domain_links`: Internal links count
-- `external_links`: External links count
-- `domain_ratio`: Internal/total links ratio
-- `timestamp`: Processing timestamp
-- `scrape_path`: Path to scraped content
+### Configuration
+
+Configure the crawler through environment variables:
+
+- `SCRAPE_DIR`: Directory for scraped content (default: 'scrape')
+- `WEB_PAGE_USER_AGENT`: Custom user agent string
+- `HTTP_REQUEST_TIMEOUT`: Request timeout in seconds (default: 10)
+- `MAX_BATCH_SIZE`: Maximum URLs to process in a batch (default: 100)
+- `BROWSER_HEADLESS`: Run browser in headless mode (default: true)
+
+## Output
+
+The crawler generates two main types of output:
+
+### 1. Scraped Content
+
+All scraped content is saved in a structured directory format:
+```
+.
+└── .jobs
+    └── <domain>
+        └── <url>.tsv
+        └── scrape
+            └── <url>.html
+```
+
+### 2. Crawl Report (TSV)
+
+After completion, the crawler generates a detailed TSV report with the following fields:
+
+| Field | Description |
+|-------|-------------|
+| URL | The crawled URL |
+| Depth | Crawl depth from root URL |
+| Same Domain Links Count | Number of links to same domain |
+| Links | Total number of links found |
+| Ratio | Ratio of same-domain to total links |
+| External Links Count | Number of links to other domains |
+| Timestamp | When the URL was crawled |
+| Success | Whether crawl was successful |
+| Error | Error message if failed, 'None' if successful |
+
+Sample TSV output:
+```tsv
+URL	Depth	Same Domain Links Count	Links	Ratio	External Links Count	Timestamp	Success	Error
+https://example.com	1	15	20	0.75	5	2024-02-15 10:30:45	True	None
+https://example.com/about	2	8	12	0.67	4	2024-02-15 10:30:47	True	None
+https://example.com/404	2	0	0	0.00	0	2024-02-15 10:30:48	False	404 Not Found
+```
+
+## Metrics and Progress
+
+The crawler provides real-time metrics:
+- URLs queued/processed/failed
+- Current crawl depth
+- Processing success rate
+- Time elapsed
+- Progress visualization
+
+## Error Handling
+
+The crawler handles various error scenarios:
+- Network timeouts
+- Invalid URLs
+- Failed page loads
+- Browser errors
+- Resource cleanup
 
 ## Development
 
@@ -208,37 +197,17 @@ poetry run python -m src.app.web_crawler https://example.com --headless false```
 ```
 src/
 ├── app/
-│   ├── web_crawler/          # Core crawling logic
-│   ├── scraper/             # Content extraction
-│   └── models/              # Data models
-└── utils/                   # Utility modules
+│   ├── models/         # Data models
+│   ├── scraper/        # Content scraping
+│   └── web_crawler/    # Core crawler logic
+├── utils/
+│   ├── config.py       # Configuration management
+│   ├── file_io.py      # File operations
+│   ├── logger.py       # Logging setup
+│   └── metrics_pubsub.py  # Metrics system
+└── main.py             # CLI entry point
 ```
-
-### Best Practices
-- Type hints throughout
-- Comprehensive logging
-- Error handling at all levels
-- Resource cleanup
-- Configurable components
-
-## Future Improvements
-
-1. **Performance**
-   - Distributed crawling support
-   - Advanced rate limiting
-   - Memory optimization
-
-2. **Features**
-   - Custom scraping rules
-   - Proxy support
-   - Content analysis
-   - Search capabilities
-
-3. **Infrastructure**
-   - Unit test suite
-   - CI/CD pipeline
-   - Docker support
 
 ## License
 
-MIT License - See LICENSE file for details
+This project is licensed under the MIT License - see the LICENSE file for details.
