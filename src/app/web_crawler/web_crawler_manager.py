@@ -20,7 +20,7 @@ class WebCrawlerManager:
         self.max_depth = max_depth
         self.n_jobs = n_jobs
         self.root_url = root_url
-        self.scraper = Scraper(logger, root_url)
+        self.scraper = Scraper(logger, metrics, root_url)
         self.metrics = metrics
         
         # Thread-safe queue for URL processing

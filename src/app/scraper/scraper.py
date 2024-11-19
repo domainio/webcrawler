@@ -13,13 +13,13 @@ from ...app.models.metrics import MetricType
 class Scraper:
     """Core scraper component that handles web page content extraction and storage."""
     
-    def __init__(self, logger: logging.Logger, root_url: str):
+    def __init__(self, logger: logging.Logger, metrics: MetricsPubSub, root_url: str):
         """Initialize scraper with logger and root URL."""
         self.logger = logger
         self.root_url = root_url
         self.save_dir = Path(Config.get_scrape_dir())
         self.save_dir.mkdir(parents=True, exist_ok=True)
-        self.metrics = MetricsPubSub()
+        self.metrics = metrics
         
     async def _setup_browser(self) -> Tuple[Page, Any]:
         """Setup and configure browser for scraping."""
