@@ -7,6 +7,8 @@ from playwright.async_api import async_playwright, Page
 
 from ...utils.file_io import save_scrape_content
 from ...utils.config import Config
+from ...utils.metrics_pubsub import MetricsPubSub
+from ...app.models.metrics import MetricType
 
 class Scraper:
     """Core scraper component that handles web page content extraction and storage."""
@@ -17,6 +19,7 @@ class Scraper:
         self.root_url = root_url
         self.save_dir = Path(Config.get_scrape_dir())
         self.save_dir.mkdir(parents=True, exist_ok=True)
+        self.metrics = MetricsPubSub()
         
     async def _setup_browser(self) -> Tuple[Page, Any]:
         """Setup and configure browser for scraping."""
@@ -65,14 +68,19 @@ class Scraper:
         browser = None
         
         try:
+            self.metrics.publish(MetricType.SCRAPE_STARTED, url)
             page, browser = await self._setup_browser()
             await self._navigate_to_page(page, url)
             content, title = await self._extract_content(page)
             saved_path = await self._save_content(url, content)
-            return self._create_result(url, title, saved_path)
+            result = self._create_result(url, title, saved_path)
+            
+            self.metrics.publish(MetricType.SCRAPE_COMPLETED, url)
+            return result
             
         except Exception as e:
             self.logger.error(f"Error scraping {url}: {str(e)}")
+            self.metrics.publish(MetricType.SCRAPE_FAILED, url)
             return None
             
         finally:

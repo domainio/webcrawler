@@ -4,8 +4,9 @@ import threading
 from queue import PriorityQueue
 from typing import Dict, List, Tuple
 from multiprocessing import cpu_count
+from ...utils.metrics_pubsub import MetricsPubSub
 
-from ..models import CrawlProcessResult, CrawlPageResult
+from ..models import CrawlProcessResult, CrawlPageResult, MetricType
 from ...utils import Config
 from .web_crawler_worker import WebCrawlerWorker
 from ..scraper import Scraper
@@ -14,12 +15,13 @@ from ..scraper import Scraper
 class WebCrawlerManager:
     """Manager class for coordinating web crawling operations."""
     
-    def __init__(self, root_url: str, max_depth: int, logger: logging.Logger, n_jobs: int = -1):
+    def __init__(self, root_url: str, max_depth: int, logger: logging.Logger, metrics: MetricsPubSub, n_jobs: int = -1):
         self.logger = logger
         self.max_depth = max_depth
         self.n_jobs = n_jobs
         self.root_url = root_url
         self.scraper = Scraper(logger, root_url)
+        self.metrics = metrics
         
         # Thread-safe queue for URL processing
         self.url_queue = PriorityQueue()
@@ -44,6 +46,7 @@ class WebCrawlerManager:
         with self.visited_lock:
             self.visited_urls.add(self.root_url)
             self.url_queue.put((current_depth, self.root_url))
+            self.metrics.publish(MetricType.URL_QUEUED, self.root_url)
             
         batch_size = self._calc_batch_size()
         
@@ -62,7 +65,13 @@ class WebCrawlerManager:
 
     def _create_worker(self) -> WebCrawlerWorker:
         """Create a new worker instance."""
-        return WebCrawlerWorker(self.headers, self.timeout, self.logger, self.scraper)
+        return WebCrawlerWorker(
+            headers=self.headers,
+            timeout=self.timeout,
+            logger=self.logger,
+            scraper=self.scraper,
+            metrics=self.metrics
+        )
 
     def _prepare_batch(self, batch_size: int) -> List[Tuple[str, int]]:
         """Prepare a batch of URLs with their depths for processing.

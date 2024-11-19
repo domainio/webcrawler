@@ -8,17 +8,19 @@ from datetime import datetime
 from ..models import CrawlPageResult
 from ..scraper import Scraper
 from ...utils import validate_url, make_full_url, is_same_domain, normalize_url
-
+from ...utils.metrics_pubsub import MetricsPubSub
+from ...app.models.metrics import MetricType
 
 class WebCrawlerWorker:
     """Worker class for crawling individual URLs asynchronously."""
     
-    def __init__(self, headers: Dict[str, str], timeout: int, logger: logging.Logger, scraper: Scraper):
+    def __init__(self, headers: Dict[str, str], timeout: int, logger: logging.Logger, scraper: Scraper, metrics: MetricsPubSub = None):
         self.headers = headers
         self.raw_timeout = timeout
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self.logger = logger
         self.scraper = scraper
+        self.metrics = metrics
 
     def _calc_page_rank(self, same_domain_links_count: int, total_links_count: int) -> float:
         """Calculate the rank of a page based on its same domain links vs total links."""
@@ -52,6 +54,7 @@ class WebCrawlerWorker:
     async def crawl_url(self, url: str, depth: int) -> CrawlPageResult:
         """Crawl a single URL and return the results."""
         try:
+            self.metrics.publish(MetricType.URL_PROCESSING, url)
             async with aiohttp.ClientSession(headers=self.headers) as session:
                 async with session.get(url, timeout=self.timeout) as response:
                     response.raise_for_status()
@@ -72,10 +75,12 @@ class WebCrawlerWorker:
                         timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     )
                     self.logger.debug(f"Successfully crawled and scraped {url}")
+                    self.metrics.publish(MetricType.URL_PROCESSED, url)
                     return result
                     
         except Exception as e:
             self.logger.error(f"Error crawling {url}: {str(e)}")
+            self.metrics.publish(MetricType.URL_FAILED, url)
             return CrawlPageResult(
                 url=url,
                 depth=depth,

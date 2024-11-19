@@ -176,8 +176,7 @@ poetry run python -m src.app.web_crawler https://example.com
 poetry run python -m src.app.web_crawler https://example.com --depth 5 --workers 4 --batch-size 50
 
 # Interactive mode with visible browser
-poetry run python -m src.app.web_crawler https://example.com --headless false
-```
+poetry run python -m src.app.web_crawler https://example.com --headless false```
 
 ## Output Structure
 

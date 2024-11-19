@@ -24,3 +24,5 @@ build/
 
 # Logs
 *.log
+
+.DS_Store

@@ -2,7 +2,7 @@ import sys
 import logging
 from src.app.web_crawler import WebCrawlerManager
 from src.utils.logger import setup_logger
-from src.utils import tsv_util, file_io, with_progress_bar
+from src.utils import MetricsPubSub, tsv_util, file_io, with_progress_bar
 
 def main():
     # Set up logging
@@ -20,8 +20,10 @@ def main():
         logger.error("Max depth must be an integer")
         sys.exit(1)
     
+    metrics = MetricsPubSub()
+    
     try:
-        crawler = WebCrawlerManager(url, max_depth, logger)
+        crawler = WebCrawlerManager(url, max_depth, logger, metrics)
         results = with_progress_bar(
             operation=crawler.crawl,
             desc=f"Crawling {url} (max depth: {max_depth})"
