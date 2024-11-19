@@ -1,25 +1,21 @@
-import sys
+import click
 import logging
 from src.app.web_crawler import WebCrawlerManager
 from src.utils.logger import setup_logger
 from src.utils import MetricsPubSub, tsv_util, file_io, with_progress_bar
 
-def main():
-    # Set up logging
+@click.command()
+@click.argument('url')
+@click.argument('max_depth', type=int)
+def main(url, max_depth):
+    """
+    Web crawler that crawls URLs starting from a given URL up to a maximum depth.
+
+    URL: The starting URL to begin crawling from
+    MAX_DEPTH: Maximum depth of links to follow (must be a positive integer)
+    """
+    
     logger = setup_logger('webcrawler')
-    
-    # Validate command line arguments
-    if len(sys.argv) != 3:
-        logger.error("Usage: python main.py <url> <max_depth>")
-        sys.exit(1)
-    
-    url = sys.argv[1]
-    try:
-        max_depth = int(sys.argv[2])
-    except ValueError:
-        logger.error("Max depth must be an integer")
-        sys.exit(1)
-    
     metrics = MetricsPubSub()
     
     try:
@@ -33,7 +29,7 @@ def main():
         tsv_util.display(results)
     except Exception as e:
         logger.error(f"Crawl failed: {str(e)}")
-        sys.exit(1)
+        raise click.Abort()
 
 if __name__ == "__main__":
     main()
