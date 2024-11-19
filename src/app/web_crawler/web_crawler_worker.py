@@ -74,12 +74,12 @@ class WebCrawlerWorker:
                         ratio=same_domain_links_count / len(links) if links else 0,
                         timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     )
-                    self.logger.debug(f"Successfully crawled and scraped {url}")
+                    self.logger.debug(f"Successfully crawled and scraped {url} (depth: {depth})")
                     self.metrics.publish(MetricType.URL_PROCESSED, url)
                     return result
                     
         except Exception as e:
-            self.logger.error(f"Error crawling {url}: {str(e)}")
+            self.logger.error(f"Error crawling {url} (depth: {depth}): {str(e)}")
             self.metrics.publish(MetricType.URL_FAILED, url)
             return CrawlPageResult(
                 url=url,
