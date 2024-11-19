@@ -10,7 +10,7 @@ from .crawl_page_result import CrawlPageResult
 class CrawlProcessResult(BaseModel):
     """Result of a complete crawl process."""
     
-    start_url: str = Field(description="Starting URL for the crawl")
+    root_url: str = Field(description="Starting URL for the crawl")
     start_time: str = Field(
         default_factory=lambda: datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         description="Timestamp when the crawl started"
@@ -28,9 +28,9 @@ class CrawlProcessResult(BaseModel):
         description="Set of all unique URLs discovered during the entire crawl"
     )
 
-    @validator('start_url')
+    @validator('root_url')
     def validate_and_normalize_url(cls, v):
-        """Validate and normalize the start URL."""
+        """Validate and normalize the root URL."""
         try:
             # First normalize the URL
             normalized_url = normalize_url(v, Config.get_timeout(), {'User-Agent': Config.get_user_agent()})
@@ -77,7 +77,7 @@ class CrawlProcessResult(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "start_url": "https://example.com",
+                "root_url": "https://example.com",
                 "crawled_pages": {
                     "https://example.com": {
                         "url": "https://example.com",

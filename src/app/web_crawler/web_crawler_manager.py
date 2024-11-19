@@ -16,20 +16,19 @@ class WebCrawlerManager:
     """Manager class for coordinating web crawling operations."""
     
     def __init__(self, root_url: str, max_depth: int, logger: logging.Logger, metrics: MetricsPubSub, n_jobs: int = -1):
-        self.logger = logger
-        self.max_depth = max_depth
-        self.n_jobs = n_jobs
-        self.root_url = root_url
-        self.scraper = Scraper(logger, metrics, root_url)
-        self.metrics = metrics
-        
-        # Thread-safe queue for URL processing
-        self.url_queue = PriorityQueue()
         # Thread-safe tracking of visited URLs
         self.visited_urls = set()
         self.visited_lock = threading.Lock()
+        self.logger = logger
+        self.max_depth = max_depth
+        self.n_jobs = n_jobs
+        self.metrics = metrics
+        self.process_result = CrawlProcessResult(root_url=root_url)
+        self.root_url = root_url
+        self.scraper = Scraper(logger, metrics, root_url)
         
-        self.process_result = CrawlProcessResult(start_url=root_url)
+        # Thread-safe queue for URL processing
+        self.url_queue = PriorityQueue()
         
         # Init web session configuration
         self.headers = {'User-Agent': Config.get_user_agent()}

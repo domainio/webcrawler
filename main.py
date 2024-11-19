@@ -2,19 +2,12 @@ import click
 import logging
 from src.app.web_crawler import WebCrawlerManager
 from src.utils.logger import setup_logger
-from src.utils import MetricsPubSub, tsv_util, file_io, with_progress_bar
+from src.utils import MetricsPubSub, tsv_util, file_io, with_progress_bar, normalize_and_validate_url
 
 @click.command()
-@click.argument('url')
-@click.argument('max_depth', type=int)
+@click.argument('url', callback=lambda ctx, param, value: normalize_and_validate_url(value))
+@click.argument('max_depth', type=click.IntRange(min=1))
 def main(url, max_depth):
-    """
-    Web crawler that crawls URLs starting from a given URL up to a maximum depth.
-
-    URL: The starting URL to begin crawling from
-    MAX_DEPTH: Maximum depth of links to follow (must be a positive integer)
-    """
-    
     logger = setup_logger('webcrawler')
     metrics = MetricsPubSub()
     

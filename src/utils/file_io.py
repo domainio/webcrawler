@@ -26,10 +26,10 @@ def save_scrape_content(root_url: str, url: str, content: str) -> str:
 
 def save_crawl_results(result: CrawlProcessResult) -> str:
     """Save crawl results to a TSV file."""
-    job_path = _get_job_path(result.start_url)
+    job_path = _get_job_path(result.root_url)
     job_path.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    domain = get_domain(result.start_url) or result.start_url
+    domain = get_domain(result.root_url) or result.root_url
     filename = f"crawler_{sanitize_filename(domain)}_{timestamp}.tsv"
     file_path = job_path / filename
     data = tsv_util.formulate(result)

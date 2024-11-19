@@ -2,6 +2,7 @@ from urllib.parse import urlparse, urljoin
 import requests
 import validators
 from typing import Dict
+from .config import Config
 
 def validate_url(url: str) -> bool:
     """Validate URL format using validators."""
@@ -24,6 +25,19 @@ def normalize_url(url: str, timeout: int, headers: Dict[str, str]) -> str:
             continue
             
     raise ValueError(f"Failed to verify URL: {url}")
+
+def normalize_and_validate_url(url: str):
+    try:
+        # First normalize the URL
+        normalized_url = normalize_url(url, Config.get_timeout(), {'User-Agent': Config.get_user_agent()})
+        
+        # Then validate the normalized URL
+        if not validate_url(normalized_url):
+            raise ValueError(f"Invalid URL format: {normalized_url}")
+            
+        return normalized_url
+    except Exception as e:
+        raise ValueError(f"Could not access URL {url}: {str(e)}")
 
 def make_full_url(base_url: str, relative_url: str) -> str:
     """Create a full URL by combining base URL and relative URL."""
