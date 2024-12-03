@@ -1,37 +1,28 @@
-#!/usr/bin/env python3
-import sys
+import click
 import logging
-from src.app.web_crawler import WebCrawler
+from src.app.web_crawler import WebCrawlerManager
 from src.utils.logger import setup_logger
-from src.utils import io_file_writer
+from src.utils import MetricsPubSub, tsv_util, file_io, with_progress_bar, normalize_and_validate_url
 
-def main():
-    # Set up logging
+@click.command()
+@click.argument('url', callback=lambda ctx, param, value: normalize_and_validate_url(value))
+@click.argument('max_depth', type=click.IntRange(min=1))
+def main(url, max_depth):
     logger = setup_logger('webcrawler')
+    metrics = MetricsPubSub()
     
-    # Validate command line arguments
-    if len(sys.argv) != 3:
-        logger.error("Usage: python main.py <url> <max_depth>")
-        sys.exit(1)
-    
-    url = sys.argv[1]
     try:
-        max_depth = int(sys.argv[2])
-    except ValueError:
-        logger.error("Max depth must be an integer")
-        sys.exit(1)
-    
-    # Initialize and run crawler
-    try:
-        crawler = WebCrawler(url, max_depth, logger)
-        results = crawler.crawl()
-        logger.info(results)
-        
-        # Save results to file
-        io_file_writer.write_results(url, results, logger)
+        crawler = WebCrawlerManager(url, max_depth, logger, metrics)
+        results = with_progress_bar(
+            operation=crawler.crawl,
+            desc=f"Crawling {url} (max depth: {max_depth})"
+        )
+        output_path = file_io.save_crawl_results(results)
+        logger.info(f"Report written to {output_path}")
+        tsv_util.display(results)
     except Exception as e:
         logger.error(f"Crawl failed: {str(e)}")
-        sys.exit(1)
+        raise click.Abort()
 
 if __name__ == "__main__":
     main()

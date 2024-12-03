@@ -1,3 +1,5 @@
-from .web_crawler import WebCrawler
+from .web_crawler import WebCrawlerManager
 
-__all__ = ['WebCrawler']
+__all__ = [
+    'WebCrawlerManager',
+]

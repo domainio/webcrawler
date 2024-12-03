@@ -1,39 +1,55 @@
 import os
 import logging
-from dotenv import load_dotenv
 from pathlib import Path
+from environs import Env
 
-# Load environment variables from .env file
-load_dotenv()
+env = Env()
+env.read_env()
 
 class Config:
     """Configuration class to manage environment variables."""
     
-    @staticmethod
-    def get_results_dir() -> str:
-        """Get the directory for storing crawl results."""
-        results_dir = os.getenv('CRAWL_RESULTS_DIR', './.crawls')
-        # Convert relative path to absolute path
-        if results_dir.startswith('./'):
-            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            relative_path = results_dir[2:]  # Remove './' but keep any other dots
-            return os.path.join(base_dir, relative_path)
-        return results_dir
-
-    @staticmethod
-    def get_user_agent() -> str:
-        """Get the User-Agent string for HTTP requests."""
-        return os.getenv('USER_AGENT', 'Mozilla/5.0 (compatible; PythonCrawler/1.0; +http://example.com)')
-
-    @staticmethod
-    def get_timeout() -> int:
-        """Get the request timeout in seconds."""
-        return int(os.getenv('REQUEST_TIMEOUT', '10'))
-
-    @staticmethod
-    def get_log_level() -> int:
-        """Get the logging level from environment or default to INFO."""
-        try:
-            return getattr(logging, os.getenv('LOG_LEVEL', 'INFO').upper())
-        except AttributeError:
-            return logging.INFO
+    JOBS_DIR = env.str('JOBS_DIR', '.jobs')
+    SCRAPE_DIR = env.str('SCRAPE_DIR', 'scrape')
+    USER_AGENT = env.str('WEB_PAGE_USER_AGENT', 
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+    REQUEST_TIMEOUT = env.int('HTTP_REQUEST_TIMEOUT', 10)
+    LOG_LEVEL = env.log_level('LOG_LEVEL', logging.INFO)
+    MAX_BATCH_SIZE = env.int('MAX_BATCH_SIZE', 100)
+    HEADLESS_MODE = env.bool('BROWSER_HEADLESS', True)
+    
+    @classmethod
+    def get_abs_path(cls, path: str) -> str:
+        """Convert relative path to absolute path."""
+        if path.startswith('./'):
+            base_dir = Path(__file__).parent.parent.parent
+            return str(base_dir / path[2:])
+        return path
+    
+    @classmethod
+    def get_jobs_dir(cls) -> str:
+        return cls.get_abs_path(cls.JOBS_DIR)
+    
+    @classmethod
+    def get_scrape_dir(cls) -> str:
+        return cls.get_abs_path(cls.SCRAPE_DIR)
+    
+    @classmethod
+    def get_user_agent(cls) -> str:
+        return cls.USER_AGENT
+    
+    @classmethod
+    def get_timeout(cls) -> int:
+        return cls.REQUEST_TIMEOUT
+    
+    @classmethod
+    def get_log_level(cls) -> int:
+        return cls.LOG_LEVEL
+    
+    @classmethod
+    def get_max_batch_size(cls) -> int:
+        return cls.MAX_BATCH_SIZE
+    
+    @classmethod
+    def get_headless_mode(cls) -> bool:
+        return cls.HEADLESS_MODE
